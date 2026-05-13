@@ -199,6 +199,52 @@ const LoginPage = ({ onNavigate }) => {
       localStorage.setItem("fitinToken", data.token);
       localStorage.setItem("fitinUser", JSON.stringify(data.user));
 
+      // Cek premium status — baik dari role user ATAU dari payment status
+      let isPremium = data.user.role === "premium";
+
+      // Double-check dengan endpoint /payment/status (jaga-jaga role belum sync)
+      if (!isPremium) {
+        try {
+          const statusRes = await api.get("/payment/status", {
+            headers: { Authorization: `Bearer ${data.token}` },
+          });
+          if (statusRes.data.is_premium) {
+            isPremium = true;
+          }
+        } catch (e) { /* skip jika error */ }
+      }
+
+      if (isPremium) {
+        localStorage.setItem("fitinPremium", "true");
+        // Fetch profil & nutrisi dari backend
+        try {
+          const profileRes = await api.get("/profile", {
+            headers: { Authorization: `Bearer ${data.token}` },
+          });
+          if (profileRes.data.profile) {
+            localStorage.setItem("fitinProfile", JSON.stringify({
+              age: String(profileRes.data.profile.umur),
+              gender: profileRes.data.profile.jenis_kelamin === "Laki-laki" ? "male" : "female",
+              weight: String(profileRes.data.profile.berat_badan),
+              height: String(profileRes.data.profile.tinggi_badan),
+              activityLevel: profileRes.data.profile.tingkat_aktivitas,
+              goal: profileRes.data.profile.goal,
+            }));
+          }
+          if (profileRes.data.program) {
+            localStorage.setItem("fitinNutrition", JSON.stringify({
+              tdee: profileRes.data.program.tdee,
+              targetCal: profileRes.data.program.target_kalori,
+              protein: profileRes.data.program.protein_g,
+              carbs: profileRes.data.program.karbo_g,
+              fat: profileRes.data.program.lemak_g,
+            }));
+          }
+        } catch (e) { /* profil belum diisi, skip */ }
+      } else {
+        localStorage.removeItem("fitinPremium");
+      }
+
       onNavigate("dashboard");
 
     } catch (err) {
@@ -445,11 +491,25 @@ const RegisterPage = ({ onNavigate }) => {
 export default function App() {
   const [page, setPage] = useState("welcome");
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    // Panggil backend logout untuk revoke token
+    try {
+      const token = localStorage.getItem("fitinToken");
+      if (token) {
+        await api.post("/logout", {}, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      }
+    } catch (e) { /* skip jika error */ }
+
+    // Bersihkan semua data localStorage
     localStorage.removeItem("fitinToken");
     localStorage.removeItem("fitinUser");
     localStorage.removeItem("fitinPremium");
     localStorage.removeItem("fitinPlan");
+    localStorage.removeItem("fitinProfile");
+    localStorage.removeItem("fitinNutrition");
+    localStorage.removeItem("fitinStats");
     setPage("welcome");
   };
 

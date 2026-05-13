@@ -87,6 +87,8 @@ const videos = [
   { title: "Upper Body Strength Training", duration: "25 min", level: "Intermediate", locked: true, thumb: "💪" },
   { title: "HIIT Cardio Blast", duration: "20 min", level: "Advanced", locked: true, thumb: "🔥" },
   { title: "Core & Abs Routine", duration: "18 min", level: "Intermediate", locked: true, thumb: "⚡" },
+  { title: "Leg Day Crusher", duration: "22 min", level: "Advanced", locked: true, thumb: "🦵" },
+  { title: "Yoga & Stretching", duration: "30 min", level: "Beginner", locked: true, thumb: "🧘" },
 ];
 
 const navItems = [
@@ -286,7 +288,23 @@ const VideoCard = ({ video }) => (
 /* ══════════════════════════════════════════
    PAGE CONTENT
 ══════════════════════════════════════════ */
-const HomeContent = ({ user }) => (
+const HomeContent = ({ user }) => {
+  const isPremium = localStorage.getItem("fitinPremium") === "true";
+  const rawStats = localStorage.getItem("fitinStats");
+  const stats = rawStats ? JSON.parse(rawStats) : { workouts: 0, calories: 0, streak: 0, goalPct: 0 };
+
+  const handleStartWorkout = () => {
+    const updated = {
+      workouts: stats.workouts + 1,
+      calories: stats.calories + Math.floor(Math.random() * 200 + 150),
+      streak: stats.streak + 1,
+      goalPct: Math.min(100, stats.goalPct + Math.floor(Math.random() * 8 + 5)),
+    };
+    localStorage.setItem("fitinStats", JSON.stringify(updated));
+    window.location.reload();
+  };
+
+  return (
   <div>
     {/* Welcome Banner */}
     <div className="rounded-2xl p-6 mb-6 relative overflow-hidden"
@@ -296,18 +314,26 @@ const HomeContent = ({ user }) => (
         Selamat datang, {user?.name || "Athlete"}! 💪
       </h2>
       <p className="text-white/70 text-sm">Hari ini adalah hari yang tepat untuk berolahraga!</p>
-      <button className="mt-4 px-6 py-2.5 rounded-xl text-sm font-bold bg-white text-red-600 hover:bg-gray-100 transition-all">
-        Mulai Workout Hari Ini
+      {isPremium && (
+        <span className="inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold"
+          style={{ background: "rgba(251,191,36,0.2)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.4)" }}>
+          ⭐ PREMIUM MEMBER
+        </span>
+      )}
+      <br/>
+      <button onClick={handleStartWorkout}
+        className="mt-4 px-6 py-2.5 rounded-xl text-sm font-bold bg-white text-red-600 hover:bg-gray-100 transition-all">
+        Selesaikan Workout Hari Ini ✓
       </button>
     </div>
 
     {/* Stats */}
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
       {[
-        { label: "Workout", value: "0", unit: "sesi", color: "#e03030", icon: "🔥" },
-        { label: "Kalori", value: "0", unit: "kcal", color: "#1a6ebd", icon: "⚡" },
-        { label: "Streak", value: "0", unit: "hari", color: "#8b1a8b", icon: "📅" },
-        { label: "Goal", value: "0%", unit: "tercapai", color: "#16a34a", icon: "🎯" },
+        { label: "Workout", value: String(stats.workouts), unit: "sesi", color: "#e03030", icon: "🔥" },
+        { label: "Kalori", value: String(stats.calories), unit: "kcal", color: "#1a6ebd", icon: "⚡" },
+        { label: "Streak", value: String(stats.streak), unit: "hari", color: "#8b1a8b", icon: "📅" },
+        { label: "Goal", value: stats.goalPct + "%", unit: "tercapai", color: "#16a34a", icon: "🎯" },
       ].map(stat => (
         <div key={stat.label} className="rounded-2xl p-4"
           style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${stat.color}20` }}>
@@ -328,10 +354,11 @@ const HomeContent = ({ user }) => (
     {/* Video Preview */}
     <h3 className="text-white font-bold text-lg mb-4">🎬 Workout Video</h3>
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      {videos.map(v => <VideoCard key={v.title} video={v} />)}
+      {videos.map(v => <VideoCard key={v.title} video={{...v, locked: isPremium ? false : v.locked}} />)}
     </div>
   </div>
-);
+  );
+};
 
 const WorkoutContent = () => (
   <div>
@@ -343,61 +370,111 @@ const WorkoutContent = () => (
   </div>
 );
 
-const VideoContent = () => (
+const VideoContent = () => {
+  const isPremium = localStorage.getItem("fitinPremium") === "true";
+  return (
   <div>
     <h2 className="text-white text-2xl font-black mb-2">Workout Video</h2>
     <p className="text-gray-500 text-sm mb-6">Ikuti video latihan untuk memandu workout kamu</p>
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      {videos.map(v => <VideoCard key={v.title} video={v} />)}
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      {videos.map(v => <VideoCard key={v.title} video={{...v, locked: isPremium ? false : v.locked}} />)}
     </div>
+    {!isPremium && (
     <div className="mt-6 p-5 rounded-2xl text-center"
       style={{ background: "linear-gradient(135deg, rgba(224,48,48,0.1), rgba(26,110,189,0.1))", border: "1px solid rgba(255,255,255,0.08)" }}>
       <div className="text-4xl mb-2">🔒</div>
       <h3 className="text-white font-bold mb-1">Unlock Semua Video</h3>
-      <p className="text-gray-500 text-sm mb-4">Upgrade ke Premium untuk akses 50+ video workout</p>
+      <p className="text-gray-500 text-sm mb-4">Upgrade ke Premium untuk akses semua video workout</p>
       <button className="px-8 py-3 rounded-xl font-bold text-white text-sm transition-all hover:brightness-110"
         style={{ background: "linear-gradient(135deg,#e03030,#a00020)" }}>
         ⭐ Upgrade Premium
       </button>
     </div>
+    )}
   </div>
-);
+  );
+};
 
-const NutritionContent = () => (
-  <div>
-    <h2 className="text-white text-2xl font-black mb-2">Nutrition</h2>
-    <p className="text-gray-500 text-sm mb-6">Panduan nutrisi untuk mendukung program fitness kamu</p>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-      {[
-        { title: "Protein", desc: "Kebutuhan protein harian untuk membangun otot dan pemulihan", amount: "1.6-2.2g/kg BB", color: "#e03030", emoji: "🥩" },
-        { title: "Karbohidrat", desc: "Sumber energi utama untuk performa workout yang optimal", amount: "4-7g/kg BB", color: "#1a6ebd", emoji: "🍚" },
-        { title: "Lemak Sehat", desc: "Penting untuk hormon dan penyerapan vitamin", amount: "0.8-1g/kg BB", color: "#8b1a8b", emoji: "🥑" },
-        { title: "Hidrasi", desc: "Menjaga performa dan pemulihan yang optimal", amount: "2-3L per hari", color: "#16a34a", emoji: "💧" },
-      ].map(n => (
-        <div key={n.title} className="rounded-2xl p-5"
-          style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${n.color}25` }}>
-          <div className="flex items-center gap-3 mb-3">
-            <span className="text-3xl">{n.emoji}</span>
-            <div>
-              <h3 className="font-bold text-lg" style={{ color: n.color }}>{n.title}</h3>
-              <span className="text-xs font-mono" style={{ color: n.color }}>{n.amount}</span>
+const NutritionContent = () => {
+  const isPremium = localStorage.getItem("fitinPremium") === "true";
+  const rawNutrition = localStorage.getItem("fitinNutrition");
+  const nutrition = rawNutrition ? JSON.parse(rawNutrition) : null;
+  const rawProfile = localStorage.getItem("fitinProfile");
+  const profile = rawProfile ? JSON.parse(rawProfile) : null;
+  const goalLabel = { cutting: "Cutting (Defisit)", bulking: "Bulking (Surplus)", maintenance: "Maintenance" };
+
+  if (isPremium && nutrition && profile) {
+    return (
+      <div>
+        <h2 className="text-white text-2xl font-black mb-2">Nutrition & Meal Plan</h2>
+        <p className="text-gray-500 text-sm mb-6">Kebutuhan nutrisi harian berdasarkan data diri kamu</p>
+        <div className="rounded-2xl p-6 mb-5 text-center" style={{ background: "linear-gradient(135deg, rgba(224,48,48,0.15), rgba(26,110,189,0.15))", border: "1px solid rgba(224,48,48,0.3)" }}>
+          <p className="text-gray-400 text-xs uppercase tracking-widest mb-1">Target Kalori Harian</p>
+          <div className="text-5xl font-black mb-1" style={{ background: "linear-gradient(90deg,#e03030,#1a6ebd)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{nutrition.targetCal}</div>
+          <p className="text-gray-500 text-sm">kkal / hari</p>
+          <p className="text-gray-600 text-xs mt-2">TDEE: {nutrition.tdee} kkal | Goal: {goalLabel[profile.goal] || profile.goal}</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+          {[
+            { title: "Protein", value: nutrition.protein + "g", color: "#e03030", emoji: "🥩" },
+            { title: "Karbohidrat", value: nutrition.carbs + "g", color: "#1a6ebd", emoji: "🍚" },
+            { title: "Lemak", value: nutrition.fat + "g", color: "#8b1a8b", emoji: "🥑" },
+          ].map(m => (
+            <div key={m.title} className="rounded-2xl p-5 text-center" style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${m.color}25` }}>
+              <div className="text-3xl mb-2">{m.emoji}</div>
+              <div className="text-2xl font-black" style={{ color: m.color }}>{m.value}</div>
+              <p className="text-white font-bold text-sm mt-1">{m.title}</p>
+            </div>
+          ))}
+        </div>
+        <div className="rounded-2xl p-4" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+          <h3 className="text-white font-bold text-sm mb-3">Data Diri Kamu</h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+            {[
+              { l: "Umur", v: profile.age + " thn" }, { l: "Gender", v: profile.gender === "male" ? "Laki-laki" : "Perempuan" },
+              { l: "Berat", v: profile.weight + " kg" }, { l: "Tinggi", v: profile.height + " cm" },
+              { l: "Aktivitas", v: profile.activityLevel }, { l: "Goal", v: profile.goal },
+            ].map(d => (
+              <div key={d.l} className="rounded-lg p-2" style={{ background: "rgba(255,255,255,0.03)" }}>
+                <span className="text-gray-500">{d.l}: </span><span className="text-white font-semibold">{d.v}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <h2 className="text-white text-2xl font-black mb-2">Nutrition</h2>
+      <p className="text-gray-500 text-sm mb-6">Panduan nutrisi untuk mendukung program fitness kamu</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {[
+          { title: "Protein", amount: "1.6-2.2g/kg BB", color: "#e03030", emoji: "🥩" },
+          { title: "Karbohidrat", amount: "4-7g/kg BB", color: "#1a6ebd", emoji: "🍚" },
+          { title: "Lemak Sehat", amount: "0.8-1g/kg BB", color: "#8b1a8b", emoji: "🥑" },
+          { title: "Hidrasi", amount: "2-3L per hari", color: "#16a34a", emoji: "💧" },
+        ].map(n => (
+          <div key={n.title} className="rounded-2xl p-5" style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${n.color}25` }}>
+            <div className="flex items-center gap-3 mb-2">
+              <span className="text-3xl">{n.emoji}</span>
+              <div>
+                <h3 className="font-bold text-lg" style={{ color: n.color }}>{n.title}</h3>
+                <span className="text-xs font-mono" style={{ color: n.color }}>{n.amount}</span>
+              </div>
             </div>
           </div>
-          <p className="text-gray-400 text-sm">{n.desc}</p>
-        </div>
-      ))}
+        ))}
+      </div>
+      <div className="mt-5 p-5 rounded-2xl text-center" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+        <div className="text-3xl mb-2">🔒</div>
+        <p className="text-gray-400 text-sm mb-3">Meal plan harian dan kalkulasi kalori tersedia di Premium</p>
+        <button className="px-6 py-2.5 rounded-xl font-bold text-white text-sm" style={{ background: "linear-gradient(135deg,#e03030,#a00020)" }}>⭐ Upgrade Premium</button>
+      </div>
     </div>
-    <div className="mt-5 p-5 rounded-2xl text-center"
-      style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
-      <div className="text-3xl mb-2">🔒</div>
-      <p className="text-gray-400 text-sm mb-3">Meal plan harian & kalkulasi kalori tersedia di Premium</p>
-      <button className="px-6 py-2.5 rounded-xl font-bold text-white text-sm"
-        style={{ background: "linear-gradient(135deg,#e03030,#a00020)" }}>
-        ⭐ Upgrade Premium
-      </button>
-    </div>
-  </div>
-);
+  );
+};
 
 const BMIContent = () => {
   const [height, setHeight] = useState("");
@@ -486,6 +563,108 @@ const LockedPage = ({ title, emoji }) => (
   </div>
 );
 
+const ProgressContent = () => {
+  const isPremium = localStorage.getItem("fitinPremium") === "true";
+  if (!isPremium) return <LockedPage title="Progress Tracking" emoji="📊" />;
+  const rawStats = localStorage.getItem("fitinStats");
+  const stats = rawStats ? JSON.parse(rawStats) : { workouts: 0, calories: 0, streak: 0, goalPct: 0 };
+  const weeks = ["Minggu 1","Minggu 2","Minggu 3","Minggu 4"];
+  return (
+    <div>
+      <h2 className="text-white text-2xl font-black mb-2">Progress Tracking</h2>
+      <p className="text-gray-500 text-sm mb-6">Pantau perkembangan fitness kamu</p>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        {[
+          { label: "Total Workout", value: stats.workouts, color: "#e03030" },
+          { label: "Kalori Terbakar", value: stats.calories + " kcal", color: "#1a6ebd" },
+          { label: "Streak", value: stats.streak + " hari", color: "#8b1a8b" },
+          { label: "Goal", value: stats.goalPct + "%", color: "#16a34a" },
+        ].map(s => (
+          <div key={s.label} className="rounded-2xl p-4 text-center" style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${s.color}25` }}>
+            <div className="text-2xl font-black" style={{ color: s.color }}>{s.value}</div>
+            <p className="text-gray-500 text-xs mt-1">{s.label}</p>
+          </div>
+        ))}
+      </div>
+      <div className="rounded-2xl p-5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+        <h3 className="text-white font-bold text-sm mb-4">Progress Mingguan</h3>
+        <div className="flex items-end gap-3 h-40">
+          {weeks.map((w, i) => {
+            const h = Math.min(100, 20 + stats.workouts * 8 + i * 15);
+            return (
+              <div key={w} className="flex-1 flex flex-col items-center">
+                <div className="w-full rounded-t-lg transition-all" style={{ height: h + "%", background: `linear-gradient(180deg, #e03030, #1a6ebd)`, minHeight: "8px" }} />
+                <p className="text-gray-500 text-xs mt-2">{w}</p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ScheduleContent = () => {
+  const isPremium = localStorage.getItem("fitinPremium") === "true";
+  if (!isPremium) return <LockedPage title="Workout Schedule" emoji="📅" />;
+  const rawProfile = localStorage.getItem("fitinProfile");
+  const profile = rawProfile ? JSON.parse(rawProfile) : { goal: "maintenance" };
+  const schedules = {
+    bulking: [
+      { day: "Senin", focus: "Chest & Triceps", exercises: ["Bench Press","Incline DB Press","Tricep Dips"] },
+      { day: "Selasa", focus: "Back & Biceps", exercises: ["Deadlift","Barbell Row","Bicep Curl"] },
+      { day: "Rabu", focus: "Rest Day", exercises: ["Stretching","Light Walk"] },
+      { day: "Kamis", focus: "Shoulders & Abs", exercises: ["OHP","Lateral Raise","Plank"] },
+      { day: "Jumat", focus: "Legs", exercises: ["Squat","Leg Press","Calf Raise"] },
+      { day: "Sabtu", focus: "Full Body", exercises: ["Clean & Press","Pull-ups","Lunges"] },
+      { day: "Minggu", focus: "Rest Day", exercises: ["Recovery","Foam Rolling"] },
+    ],
+    cutting: [
+      { day: "Senin", focus: "HIIT Cardio", exercises: ["Burpees","Mountain Climbers","Jump Squats"] },
+      { day: "Selasa", focus: "Upper Body", exercises: ["Push-ups","DB Row","Shoulder Press"] },
+      { day: "Rabu", focus: "Cardio", exercises: ["Running 30min","Jump Rope"] },
+      { day: "Kamis", focus: "Lower Body", exercises: ["Squats","Lunges","Calf Raise"] },
+      { day: "Jumat", focus: "HIIT + Core", exercises: ["Plank","Russian Twist","Sprints"] },
+      { day: "Sabtu", focus: "Active Recovery", exercises: ["Yoga","Light Jog"] },
+      { day: "Minggu", focus: "Rest Day", exercises: ["Stretching"] },
+    ],
+    maintenance: [
+      { day: "Senin", focus: "Push Day", exercises: ["Bench Press","OHP","Tricep Extension"] },
+      { day: "Selasa", focus: "Pull Day", exercises: ["Pull-ups","Barbell Row","Bicep Curl"] },
+      { day: "Rabu", focus: "Cardio", exercises: ["Running 20min","Cycling"] },
+      { day: "Kamis", focus: "Legs", exercises: ["Squat","Leg Curl","Calf Raise"] },
+      { day: "Jumat", focus: "Full Body", exercises: ["Deadlift","Dips","Plank"] },
+      { day: "Sabtu", focus: "Light Cardio", exercises: ["Swimming","Walking"] },
+      { day: "Minggu", focus: "Rest Day", exercises: ["Rest & Recover"] },
+    ],
+  };
+  const schedule = schedules[profile.goal] || schedules.maintenance;
+  const colors = ["#e03030","#1a6ebd","#16a34a","#8b1a8b","#f59e0b","#06b6d4","#6b7280"];
+  return (
+    <div>
+      <h2 className="text-white text-2xl font-black mb-2">Workout Schedule</h2>
+      <p className="text-gray-500 text-sm mb-6">Jadwal latihan mingguan untuk program {profile.goal}</p>
+      <div className="flex flex-col gap-3">
+        {schedule.map((s, i) => (
+          <div key={s.day} className="rounded-2xl p-4 flex items-start gap-4" style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${colors[i]}20` }}>
+            <div className="w-16 text-center flex-shrink-0">
+              <p className="font-black text-sm" style={{ color: colors[i] }}>{s.day}</p>
+            </div>
+            <div className="flex-1">
+              <p className="text-white font-bold text-sm mb-1">{s.focus}</p>
+              <div className="flex flex-wrap gap-1">
+                {s.exercises.map(e => (
+                  <span key={e} className="px-2 py-0.5 rounded-full text-xs" style={{ background: `${colors[i]}15`, color: colors[i] }}>{e}</span>
+                ))}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 /* ══════════════════════════════════════════
    PROFILE CONTENT
 ══════════════════════════════════════════ */
@@ -527,8 +706,8 @@ const ProfileContent = ({ onLogout }) => {
         </div>
         <h3 className="text-white text-xl font-black mb-1">{user?.name || "Athlete"}</h3>
         <span className="inline-block px-3 py-1 rounded-full text-xs font-bold"
-          style={{ background: "rgba(251,191,36,0.1)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.3)" }}>
-          FREE MEMBER
+          style={{ background: localStorage.getItem("fitinPremium") === "true" ? "rgba(251,191,36,0.2)" : "rgba(251,191,36,0.1)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.3)" }}>
+          {localStorage.getItem("fitinPremium") === "true" ? "⭐ PREMIUM MEMBER" : "FREE MEMBER"}
         </span>
       </div>
 
@@ -553,7 +732,7 @@ const ProfileContent = ({ onLogout }) => {
         <div className="text-3xl mb-2">⭐</div>
         <h4 className="text-white font-bold mb-1">Upgrade ke Premium</h4>
         <p className="text-gray-500 text-xs mb-4">
-          Unlock semua fitur: Progress, Schedule, 50+ Video, dan Meal Plan!
+          Unlock semua fitur: Progress, Schedule, Video, dan Meal Plan!
         </p>
         <button className="w-full py-3 rounded-xl font-bold text-white text-sm transition-all hover:brightness-110"
           style={{ background: "linear-gradient(135deg,#e03030,#a00020)" }}>
@@ -639,7 +818,8 @@ const UpgradePopup = ({ onClose, onUpgrade }) => (
 export default function Dashboard({ onLogout, onNavigate }) {
   const [active, setActive] = useState("home");
   const [collapsed, setCollapsed] = useState(false);
-  const [showPopup, setShowPopup] = useState(true);
+  const isPremium = localStorage.getItem("fitinPremium") === "true";
+  const [showPopup, setShowPopup] = useState(!isPremium);
 
   const user = JSON.parse(localStorage.getItem("fitinUser") || '{"name":"Athlete"}');
 
@@ -655,8 +835,8 @@ export default function Dashboard({ onLogout, onNavigate }) {
       case "video": return <VideoContent />;
       case "nutrition": return <NutritionContent />;
       case "bmi": return <BMIContent />;
-      case "progress": return <LockedPage title="Progress Tracking" emoji="📊" />;
-      case "schedule": return <LockedPage title="Workout Schedule" emoji="📅" />;
+      case "progress": return <ProgressContent />;
+      case "schedule": return <ScheduleContent />;
       case "profile": return <ProfileContent onLogout={onLogout} />;
       default: return <HomeContent user={user} />;
     }
@@ -687,12 +867,19 @@ export default function Dashboard({ onLogout, onNavigate }) {
             {navItems.find(n => n.key === active)?.label || "Dashboard"}
           </h1>
           <div className="flex items-center gap-3">
+            {!isPremium ? (
             <button
               onClick={() => { setShowPopup(false); onNavigate("payment"); }}
               className="px-4 py-2 rounded-lg text-xs font-bold text-yellow-400 transition-all hover:brightness-110"
               style={{ background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.3)" }}>
               ⭐ Upgrade
             </button>
+            ) : (
+            <span className="px-3 py-1.5 rounded-lg text-xs font-bold text-yellow-400"
+              style={{ background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.3)" }}>
+              ⭐ Premium
+            </span>
+            )}
             <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold"
               style={{ background: "linear-gradient(135deg,#e03030,#1a6ebd)" }}>
               {user?.name?.[0]?.toUpperCase() || "A"}

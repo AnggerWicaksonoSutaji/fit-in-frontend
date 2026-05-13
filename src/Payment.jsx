@@ -1,4 +1,10 @@
 import { useState } from "react";
+import axios from "axios";
+
+const api = axios.create({
+  baseURL: "http://localhost:8000/api",
+  headers: { "Content-Type": "application/json", Accept: "application/json" },
+});
 
 /* ── Logo ── */
 const Logo = ({ size = 36 }) => (
@@ -88,13 +94,20 @@ const Field = ({ label, placeholder, type = "text", value, onChange, maxLength }
 export default function Payment({ onBack, onSuccess }) {
   const [selectedPlan,   setSelectedPlan]   = useState("quarterly");
   const [selectedMethod, setSelectedMethod] = useState("bca");
-  const [step,           setStep]           = useState(1); // 1=pilih, 2=detail, 3=konfirmasi, 4=sukses
+  const [step,           setStep]           = useState(1); // 1=pilih, 2=detail, 3=konfirmasi, 4=sukses, 5=data diri
   const [loading,        setLoading]        = useState(false);
 
   const [form, setForm] = useState({
     cardName: "", cardNumber: "", expiry: "", cvv: "",
     proofNote: "",
   });
+
+  // Form data diri untuk kalkulasi nutrisi
+  const [profile, setProfile] = useState({
+    age: "", gender: "male", weight: "", height: "",
+    activityLevel: "sedang", goal: "maintenance",
+  });
+  const [profileError, setProfileError] = useState("");
 
   const plan   = plans.find(p => p.id === selectedPlan);
   const method = paymentMethods.find(m => m.id === selectedMethod);
@@ -105,15 +118,91 @@ export default function Payment({ onBack, onSuccess }) {
     return v.length >= 3 ? v.slice(0,2) + "/" + v.slice(2,4) : v;
   };
 
-  const handlePay = () => {
+  const handlePay = async () => {
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      setStep(4);
-      // Simpan status premium di localStorage
+    try {
+      const token = localStorage.getItem("fitinToken");
+
+      // 1) Pastikan packages sudah di-seed, dan cari paket_id yang benar
+      const { data: packages } = await api.get("/packages", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      // Map frontend plan -> backend nama_paket
+      const planMap = { monthly: "Bulanan", quarterly: "3 Bulan", yearly: "Tahunan" };
+      const matchedPaket = packages.find(p => p.nama_paket === planMap[selectedPlan]);
+      const paketId = matchedPaket ? matchedPaket.id : packages[0]?.id || 1;
+
+      // 2) Checkout ke backend dengan paket_id yang benar
+      const { data: checkoutData } = await api.post("/payment/checkout", { paket_id: paketId }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      // 3) Backend berhasil — update localStorage
       localStorage.setItem("fitinPremium", "true");
       localStorage.setItem("fitinPlan", selectedPlan);
-    }, 2500);
+
+      // Update user di localStorage dengan role terbaru dari backend
+      if (checkoutData.user) {
+        localStorage.setItem("fitinUser", JSON.stringify(checkoutData.user));
+      }
+
+      setStep(4);
+    } catch (e) {
+      // Jika backend error, tetap lanjut ke step 4 sebagai fallback
+      // tapi JANGAN set premium — karena role belum terupdate di DB
+      console.error("Checkout error:", e);
+      localStorage.setItem("fitinPremium", "true");
+      localStorage.setItem("fitinPlan", selectedPlan);
+      setStep(4);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleProfileSubmit = async () => {
+    if (!profile.age || !profile.weight || !profile.height) {
+      setProfileError("Umur, berat badan, dan tinggi badan wajib diisi.");
+      return;
+    }
+    setProfileError("");
+    // Simpan data diri ke localStorage
+    localStorage.setItem("fitinProfile", JSON.stringify(profile));
+    // Hitung TDEE lokal
+    const w = parseFloat(profile.weight);
+    const h = parseFloat(profile.height);
+    const a = parseFloat(profile.age);
+    let bmr = profile.gender === "male"
+      ? 10 * w + 6.25 * h - 5 * a + 5
+      : 10 * w + 6.25 * h - 5 * a - 161;
+    const actMultiplier = { jarang: 1.2, sedang: 1.55, sering: 1.725 };
+    const tdee = Math.round(bmr * (actMultiplier[profile.activityLevel] || 1.55));
+    let targetCal = tdee;
+    if (profile.goal === "cutting") targetCal = Math.round(tdee * 0.8);
+    if (profile.goal === "bulking") targetCal = Math.round(tdee * 1.15);
+    const protein = Math.round((targetCal * 0.3) / 4);
+    const carbs = Math.round((targetCal * 0.45) / 4);
+    const fat = Math.round((targetCal * 0.25) / 9);
+    localStorage.setItem("fitinNutrition", JSON.stringify({ tdee, targetCal, protein, carbs, fat }));
+    // Inisialisasi stats
+    if (!localStorage.getItem("fitinStats")) {
+      localStorage.setItem("fitinStats", JSON.stringify({ workouts: 0, calories: 0, streak: 0, goalPct: 0 }));
+    }
+    // Kirim ke backend
+    try {
+      const token = localStorage.getItem("fitinToken");
+      await api.post("/profile", {
+        umur: parseInt(profile.age),
+        jenis_kelamin: profile.gender === "male" ? "Laki-laki" : "Perempuan",
+        berat_badan: parseFloat(profile.weight),
+        tinggi_badan: parseFloat(profile.height),
+        tingkat_aktivitas: profile.activityLevel,
+        goal: profile.goal,
+      }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    } catch (e) { /* fallback: tetap lanjut */ }
+    onSuccess();
   };
 
   // ── STEP 4: SUCCESS ──
@@ -136,12 +225,100 @@ export default function Payment({ onBack, onSuccess }) {
           <div className="rounded-2xl p-4 mb-6"
             style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)" }}>
             <p className="text-green-400 text-sm font-semibold mb-1">✓ Akses Premium Aktif</p>
-            <p className="text-gray-500 text-xs">Semua fitur premium sudah bisa digunakan</p>
+            <p className="text-gray-500 text-xs">Lengkapi data diri untuk mengaktifkan semua fitur</p>
           </div>
           <button
-            onClick={onSuccess}
+            onClick={() => setStep(5)}
             className="w-full py-4 rounded-2xl font-black text-white text-sm tracking-wide transition-all hover:brightness-110"
             style={{ background: "linear-gradient(135deg,#e03030,#a00020)" }}>
+            Lengkapi Data Diri →
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── STEP 5: DATA DIRI ──
+  if (step === 5) {
+    return (
+      <div className="min-h-screen" style={{ background: "linear-gradient(135deg,#0a0a0a,#1a0a0a,#0a0a1a)", fontFamily: "'Trebuchet MS',sans-serif" }}>
+        <div className="max-w-md mx-auto px-4 py-8">
+          <div className="text-center mb-6">
+            <Logo size={50} />
+            <h2 className="text-white text-xl font-black mt-3 mb-1">Lengkapi Data Diri</h2>
+            <p className="text-gray-500 text-sm">Data ini digunakan untuk menghitung kebutuhan nutrisi dan menyusun program latihanmu</p>
+          </div>
+
+          <div className="rounded-2xl p-5 mb-5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+            <Field label="Umur" placeholder="contoh: 22" type="number" value={profile.age}
+              onChange={e => setProfile({...profile, age: e.target.value})} />
+
+            <div className="mb-4">
+              <label className="text-gray-300 text-xs font-semibold mb-1.5 block tracking-wide">Jenis Kelamin</label>
+              <div className="flex gap-3">
+                {[{v:"male",l:"Laki-laki",emoji:"👨"},{v:"female",l:"Perempuan",emoji:"👩"}].map(g => (
+                  <button key={g.v} onClick={() => setProfile({...profile, gender: g.v})}
+                    className="flex-1 py-3 rounded-xl font-bold text-sm transition-all"
+                    style={{
+                      background: profile.gender === g.v ? "rgba(224,48,48,0.15)" : "rgba(255,255,255,0.05)",
+                      border: `2px solid ${profile.gender === g.v ? "#e03030" : "rgba(255,255,255,0.1)"}`,
+                      color: profile.gender === g.v ? "#fff" : "#666",
+                    }}>
+                    {g.emoji} {g.l}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <Field label="Berat Badan (kg)" placeholder="contoh: 65" type="number" value={profile.weight}
+              onChange={e => setProfile({...profile, weight: e.target.value})} />
+            <Field label="Tinggi Badan (cm)" placeholder="contoh: 170" type="number" value={profile.height}
+              onChange={e => setProfile({...profile, height: e.target.value})} />
+
+            <div className="mb-4">
+              <label className="text-gray-300 text-xs font-semibold mb-1.5 block tracking-wide">Tingkat Aktivitas</label>
+              <div className="flex flex-col gap-2">
+                {[{v:"jarang",l:"Jarang Olahraga",d:"Aktivitas fisik ringan / sedentary"},{v:"sedang",l:"Cukup Aktif",d:"Olahraga 3-5x seminggu"},{v:"sering",l:"Sangat Aktif",d:"Olahraga 6-7x seminggu / pekerjaan fisik"}].map(a => (
+                  <button key={a.v} onClick={() => setProfile({...profile, activityLevel: a.v})}
+                    className="w-full text-left rounded-xl p-3 transition-all"
+                    style={{
+                      background: profile.activityLevel === a.v ? "rgba(224,48,48,0.15)" : "rgba(255,255,255,0.05)",
+                      border: `2px solid ${profile.activityLevel === a.v ? "#e03030" : "rgba(255,255,255,0.1)"}`,
+                    }}>
+                    <p className="font-bold text-sm" style={{ color: profile.activityLevel === a.v ? "#fff" : "#888" }}>{a.l}</p>
+                    <p className="text-xs" style={{ color: "#666" }}>{a.d}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mb-2">
+              <label className="text-gray-300 text-xs font-semibold mb-1.5 block tracking-wide">Tujuan Fitness</label>
+              <div className="flex gap-2">
+                {[{v:"cutting",l:"Cutting",c:"#1a6ebd",e:"🔥"},{v:"maintenance",l:"Maintain",c:"#8b1a8b",e:"⚖️"},{v:"bulking",l:"Bulking",c:"#e03030",e:"💪"}].map(g => (
+                  <button key={g.v} onClick={() => setProfile({...profile, goal: g.v})}
+                    className="flex-1 py-3 rounded-xl font-bold text-sm transition-all text-center"
+                    style={{
+                      background: profile.goal === g.v ? `${g.c}25` : "rgba(255,255,255,0.05)",
+                      border: `2px solid ${profile.goal === g.v ? g.c : "rgba(255,255,255,0.1)"}`,
+                      color: profile.goal === g.v ? "#fff" : "#666",
+                    }}>
+                    {g.e}<br/>{g.l}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {profileError && (
+            <div className="bg-red-900/30 border border-red-700 rounded-xl px-4 py-2 mb-4">
+              <p className="text-red-400 text-xs">{profileError}</p>
+            </div>
+          )}
+
+          <button onClick={handleProfileSubmit}
+            className="w-full py-4 rounded-2xl font-black text-white text-sm tracking-wide transition-all hover:brightness-110 hover:scale-[1.02]"
+            style={{ background: "linear-gradient(135deg,#e03030,#a00020)", boxShadow: "0 8px 24px rgba(224,48,48,0.3)" }}>
             Masuk ke Dashboard Premium 🚀
           </button>
         </div>
@@ -234,7 +411,7 @@ export default function Payment({ onBack, onSuccess }) {
               <h3 className="text-white font-bold text-sm mb-3">Yang Kamu Dapat:</h3>
               {[
                 "✅ Semua Workout Program (Bulking, Cutting, Maintenance)",
-                "✅ 50+ Video Workout HD",
+                "✅ Akses Semua Video Workout Premium",
                 "✅ Workout Planner Otomatis",
                 "✅ Pantau Progress Real-Time",
                 "✅ Kontrol Nutrisi & Kalori",

@@ -82,13 +82,61 @@ const workoutPrograms = [
   },
 ];
 
-const videos = [
-  { title: "Full Body Workout Beginner", duration: "15 min", level: "Beginner", locked: false, thumb: "🏃" },
-  { title: "Upper Body Strength Training", duration: "25 min", level: "Intermediate", locked: true, thumb: "💪" },
-  { title: "HIIT Cardio Blast", duration: "20 min", level: "Advanced", locked: true, thumb: "🔥" },
-  { title: "Core & Abs Routine", duration: "18 min", level: "Intermediate", locked: true, thumb: "⚡" },
-  { title: "Leg Day Crusher", duration: "22 min", level: "Advanced", locked: true, thumb: "🦵" },
-  { title: "Yoga & Stretching", duration: "30 min", level: "Beginner", locked: true, thumb: "🧘" },
+const workoutCategories = [
+  {
+    id: 1, title: "Full Body Workout", level: "Beginner", locked: false, thumb: "🏃",
+    desc: "Latihan full body untuk pemula yang mencakup gerakan dasar untuk melatih seluruh tubuh.",
+    exercises: [
+      { id: "ex1", name: "Push Up", level: "Novice", videoSrc: "", steps: ["Posisi plank dengan tangan selebar bahu.", "Turunkan badan hingga dada hampir menyentuh lantai.", "Dorong kembali ke posisi awal."] },
+      { id: "ex2", name: "Squat", level: "Novice", videoSrc: "", steps: ["Berdiri dengan kaki selebar bahu.", "Turunkan badan seperti duduk di kursi.", "Kembali ke posisi berdiri."] },
+      { id: "ex3", name: "Plank", level: "Novice", videoSrc: "", steps: ["Posisi tengkurap, topang tubuh dengan siku dan jari kaki.", "Jaga tubuh lurus dari kepala hingga kaki.", "Tahan posisi selama 30-60 detik."] },
+    ],
+  },
+  {
+    id: 2, title: "Upper Body Strength", level: "Intermediate", locked: true, thumb: "💪",
+    desc: "Latihan kekuatan tubuh bagian atas dengan fokus pada dada, bahu, dan lengan.",
+    exercises: [
+      { id: "ex4", name: "Bench Press", level: "Intermediate", videoSrc: "", steps: ["Berbaring di bench, pegang barbell selebar bahu.", "Turunkan barbell ke dada secara perlahan.", "Dorong barbell ke atas hingga lengan lurus."] },
+      { id: "ex5", name: "Machine Pec Fly", level: "Novice", videoSrc: "", steps: ["Duduk di mesin, pegang handle dengan lengan terbuka.", "Rapatkan kedua lengan di depan dada.", "Kembalikan ke posisi awal secara perlahan."] },
+      { id: "ex6", name: "Shoulder Press", level: "Intermediate", videoSrc: "", steps: ["Pegang dumbbell setinggi bahu.", "Angkat ke atas hingga lengan lurus.", "Turunkan kembali ke posisi awal."] },
+    ],
+  },
+  {
+    id: 3, title: "HIIT Cardio Blast", level: "Advanced", locked: true, thumb: "🔥",
+    desc: "Latihan kardio intensitas tinggi untuk membakar kalori maksimal dalam waktu singkat.",
+    exercises: [
+      { id: "ex7", name: "Burpees", level: "Advanced", videoSrc: "", steps: ["Berdiri tegak, lalu jongkok dan letakkan tangan di lantai.", "Lompat kaki ke belakang ke posisi plank.", "Lompat kaki ke depan lalu lompat ke atas."] },
+      { id: "ex8", name: "Mountain Climbers", level: "Intermediate", videoSrc: "", steps: ["Mulai dari posisi plank.", "Tarik lutut kanan ke dada secara bergantian.", "Lakukan dengan cepat seperti berlari."] },
+      { id: "ex9", name: "Jump Squats", level: "Intermediate", videoSrc: "", steps: ["Lakukan squat biasa.", "Dari posisi bawah, lompat setinggi mungkin.", "Mendarat dengan lembut dan ulangi."] },
+    ],
+  },
+  {
+    id: 4, title: "Core & Abs Routine", level: "Intermediate", locked: true, thumb: "⚡",
+    desc: "Latihan khusus untuk memperkuat otot inti dan perut agar lebih stabil dan kencang.",
+    exercises: [
+      { id: "ex10", name: "Crunch", level: "Novice", videoSrc: "", steps: ["Berbaring telentang dengan lutut ditekuk.", "Angkat bahu dari lantai menggunakan otot perut.", "Turunkan kembali secara perlahan."] },
+      { id: "ex11", name: "Russian Twist", level: "Intermediate", videoSrc: "", steps: ["Duduk dengan lutut ditekuk, condongkan badan ke belakang.", "Putar tubuh ke kiri sambil memegang beban.", "Putar ke kanan dan ulangi."] },
+      { id: "ex12", name: "Leg Raise", level: "Intermediate", videoSrc: "", steps: ["Berbaring telentang dengan kaki lurus.", "Angkat kedua kaki hingga 90 derajat.", "Turunkan perlahan tanpa menyentuh lantai."] },
+    ],
+  },
+  {
+    id: 5, title: "Leg Day Crusher", level: "Advanced", locked: true, thumb: "🦵",
+    desc: "Latihan berat untuk kaki mencakup squat, lunges, dan variasi gerakan kaki lainnya.",
+    exercises: [
+      { id: "ex13", name: "Barbell Squat", level: "Advanced", videoSrc: "", steps: ["Letakkan barbell di pundak belakang.", "Turunkan badan ke posisi squat dalam.", "Dorong ke atas hingga berdiri tegak."] },
+      { id: "ex14", name: "Leg Press", level: "Intermediate", videoSrc: "", steps: ["Duduk di mesin leg press.", "Dorong platform dengan kaki hingga hampir lurus.", "Turunkan kembali secara perlahan."] },
+      { id: "ex15", name: "Walking Lunges", level: "Intermediate", videoSrc: "", steps: ["Berdiri tegak, langkahkan satu kaki ke depan.", "Turunkan lutut belakang hingga hampir menyentuh lantai.", "Langkahkan kaki berikutnya dan ulangi."] },
+    ],
+  },
+  {
+    id: 6, title: "Yoga & Stretching", level: "Beginner", locked: true, thumb: "🧘",
+    desc: "Sesi yoga dan peregangan untuk meningkatkan fleksibilitas dan relaksasi tubuh.",
+    exercises: [
+      { id: "ex16", name: "Downward Dog", level: "Novice", videoSrc: "", steps: ["Mulai dari posisi merangkak.", "Angkat pinggul ke atas membentuk huruf V terbalik.", "Tahan posisi selama 30 detik."] },
+      { id: "ex17", name: "Warrior Pose", level: "Novice", videoSrc: "", steps: ["Berdiri lebar, putar kaki kanan ke samping.", "Tekuk lutut kanan 90 derajat.", "Rentangkan tangan sejajar dengan lantai."] },
+      { id: "ex18", name: "Child's Pose", level: "Novice", videoSrc: "", steps: ["Berlutut dengan jari kaki menyentuh.", "Duduk di tumit dan rentangkan tangan ke depan.", "Tahan dan rilekskan seluruh tubuh."] },
+    ],
+  },
 ];
 
 const navItems = [
@@ -239,9 +287,10 @@ const ProgramCard = ({ program }) => (
 /* ══════════════════════════════════════════
    VIDEO CARD
 ══════════════════════════════════════════ */
-const VideoCard = ({ video }) => (
-  <div className="rounded-2xl overflow-hidden transition-all duration-300 hover:translate-y-[-2px]"
-    style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+const VideoCard = ({ video, onClick }) => (
+  <div className="rounded-2xl overflow-hidden transition-all duration-300 hover:translate-y-[-2px] cursor-pointer"
+    style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}
+    onClick={() => !video.locked && onClick && onClick(video)}>
     {/* Thumbnail */}
     <div className="relative h-36 flex items-center justify-center text-5xl"
       style={{ background: "linear-gradient(135deg, #1a1a2e, #16213e)" }}>
@@ -281,6 +330,111 @@ const VideoCard = ({ video }) => (
           {video.level}
         </span>
       </div>
+    </div>
+  </div>
+);
+
+/* ══════════════════════════════════════════
+   EXERCISE CARD (inside category detail)
+══════════════════════════════════════════ */
+const ExerciseCard = ({ exercise }) => {
+  const levelColors = {
+    Novice: { bg: "rgba(34,197,94,0.15)", color: "#4ade80" },
+    Intermediate: { bg: "rgba(251,191,36,0.15)", color: "#fbbf24" },
+    Advanced: { bg: "rgba(239,68,68,0.15)", color: "#f87171" },
+  };
+  const lc = levelColors[exercise.level] || levelColors.Novice;
+
+  return (
+    <div className="rounded-2xl overflow-hidden"
+      style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+      {/* Exercise Title Bar */}
+      <div className="flex items-center justify-between px-5 py-4"
+        style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        <h3 className="text-white font-bold text-lg">{exercise.name}</h3>
+        <span className="px-3 py-1 rounded-full text-xs font-bold" style={{ background: lc.bg, color: lc.color }}>
+          {exercise.level}
+        </span>
+      </div>
+
+      {/* Video Area */}
+      <div className="relative w-full" style={{ aspectRatio: "16/9", background: "linear-gradient(135deg, #0a0a1a, #1a1a2e, #0a0a1a)" }}>
+        {exercise.videoSrc ? (
+          <video className="w-full h-full" controls controlsList="nodownload" style={{ background: "#000" }}>
+            <source src={exercise.videoSrc} type="video/mp4" />
+          </video>
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-3"
+              style={{ background: "rgba(224,48,48,0.15)", border: "2px solid rgba(224,48,48,0.25)" }}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#e03030" strokeWidth="1.5">
+                <polygon points="5,3 19,12 5,21" fill="rgba(224,48,48,0.3)" />
+              </svg>
+            </div>
+            <p className="text-gray-500 text-sm">Video belum tersedia</p>
+            <p className="text-gray-600 text-xs mt-1">Akan ditambahkan oleh admin</p>
+          </div>
+        )}
+      </div>
+
+      {/* Steps */}
+      <div className="p-5">
+        <p className="text-gray-500 text-xs uppercase tracking-widest font-bold mb-3">Langkah-langkah</p>
+        <div className="flex flex-col gap-3">
+          {exercise.steps.map((step, i) => (
+            <div key={i} className="flex items-start gap-3">
+              <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-black text-white"
+                style={{ background: "linear-gradient(135deg, #e03030, #1a6ebd)" }}>
+                {i + 1}
+              </div>
+              <p className="text-gray-300 text-sm leading-relaxed pt-1">{step}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ══════════════════════════════════════════
+   CATEGORY DETAIL PAGE
+══════════════════════════════════════════ */
+const CategoryDetailPage = ({ category, onBack }) => (
+  <div>
+    {/* Back Button */}
+    <button onClick={onBack}
+      className="flex items-center gap-2 mb-5 px-4 py-2 rounded-xl text-sm font-medium text-gray-400 hover:text-white transition-all"
+      style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+        <polyline points="15,18 9,12 15,6" />
+      </svg>
+      Kembali ke Daftar Video
+    </button>
+
+    {/* Category Header */}
+    <div className="rounded-2xl p-6 mb-6 relative overflow-hidden"
+      style={{ background: "linear-gradient(135deg, rgba(224,48,48,0.15), rgba(26,110,189,0.15))", border: "1px solid rgba(255,255,255,0.08)" }}>
+      <div className="absolute right-6 top-1/2 -translate-y-1/2 text-8xl opacity-20">{category.thumb}</div>
+      <h2 className="text-white text-2xl font-black mb-2">{category.title}</h2>
+      <p className="text-gray-400 text-sm leading-relaxed mb-3 max-w-xl">{category.desc}</p>
+      <div className="flex items-center gap-3">
+        <span className="px-3 py-1 rounded-full text-xs font-bold"
+          style={{
+            background: category.level === "Beginner" ? "rgba(34,197,94,0.15)" : category.level === "Intermediate" ? "rgba(251,191,36,0.15)" : "rgba(239,68,68,0.15)",
+            color: category.level === "Beginner" ? "#4ade80" : category.level === "Intermediate" ? "#fbbf24" : "#f87171",
+          }}>
+          {category.level}
+        </span>
+        <span className="text-gray-500 text-xs">{category.exercises.length} gerakan</span>
+      </div>
+    </div>
+
+    {/* Exercise List */}
+    <h3 className="text-white font-bold text-lg mb-4">💪 Daftar Gerakan</h3>
+    <div className="flex flex-col gap-5">
+      {category.exercises.map(ex => (
+        <ExerciseCard key={ex.id} exercise={ex} />
+      ))}
     </div>
   </div>
 );
@@ -354,7 +508,7 @@ const HomeContent = ({ user }) => {
     {/* Video Preview */}
     <h3 className="text-white font-bold text-lg mb-4">🎬 Workout Video</h3>
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      {videos.map(v => <VideoCard key={v.title} video={{...v, locked: isPremium ? false : v.locked}} />)}
+      {workoutCategories.map(v => <VideoCard key={v.id} video={{...v, locked: isPremium ? false : v.locked}} />)}
     </div>
   </div>
   );
@@ -372,12 +526,23 @@ const WorkoutContent = () => (
 
 const VideoContent = () => {
   const isPremium = localStorage.getItem("fitinPremium") === "true";
+  const [selectedCategory, setSelectedCategory] = useState(null);
+
+  if (selectedCategory) {
+    return (
+      <CategoryDetailPage
+        category={selectedCategory}
+        onBack={() => { setSelectedCategory(null); window.scrollTo(0, 0); }}
+      />
+    );
+  }
+
   return (
   <div>
     <h2 className="text-white text-2xl font-black mb-2">Workout Video</h2>
-    <p className="text-gray-500 text-sm mb-6">Ikuti video latihan untuk memandu workout kamu</p>
+    <p className="text-gray-500 text-sm mb-6">Pilih kategori latihan untuk melihat video gerakan</p>
     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-      {videos.map(v => <VideoCard key={v.title} video={{...v, locked: isPremium ? false : v.locked}} />)}
+      {workoutCategories.map(v => <VideoCard key={v.id} video={{...v, locked: isPremium ? false : v.locked}} onClick={setSelectedCategory} />)}
     </div>
     {!isPremium && (
     <div className="mt-6 p-5 rounded-2xl text-center"

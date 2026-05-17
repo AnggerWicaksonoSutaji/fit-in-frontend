@@ -62,15 +62,7 @@ const plans = [
   },
 ];
 
-const paymentMethods = [
-  { id: "bca",     label: "BCA",          icon: "🏦", type: "bank",   number: "1234567890",   name: "FIT-IN INDONESIA" },
-  { id: "bni",     label: "BNI",          icon: "🏦", type: "bank",   number: "0987654321",   name: "FIT-IN INDONESIA" },
-  { id: "mandiri", label: "Mandiri",       icon: "🏦", type: "bank",   number: "1122334455",   name: "FIT-IN INDONESIA" },
-  { id: "gopay",   label: "GoPay",         icon: "💚", type: "ewallet", number: "081234567890", name: "FIT-IN INDONESIA" },
-  { id: "ovo",     label: "OVO",           icon: "💜", type: "ewallet", number: "081234567890", name: "FIT-IN INDONESIA" },
-  { id: "dana",    label: "DANA",          icon: "💙", type: "ewallet", number: "081234567890", name: "FIT-IN INDONESIA" },
-  { id: "qris",    label: "QRIS",          icon: "📱", type: "qris",    number: null,            name: null },
-];
+
 
 /* ── Input Field ── */
 const Field = ({ label, placeholder, type = "text", value, onChange, maxLength }) => (
@@ -93,14 +85,8 @@ const Field = ({ label, placeholder, type = "text", value, onChange, maxLength }
 ════════════════════════════════════════ */
 export default function Payment({ onBack, onSuccess }) {
   const [selectedPlan,   setSelectedPlan]   = useState("quarterly");
-  const [selectedMethod, setSelectedMethod] = useState("bca");
-  const [step,           setStep]           = useState(1); // 1=pilih, 2=detail, 3=konfirmasi, 4=sukses, 5=data diri
+  const [step,           setStep]           = useState(1); // 1=pilih, 2=sukses, 3=data diri
   const [loading,        setLoading]        = useState(false);
-
-  const [form, setForm] = useState({
-    cardName: "", cardNumber: "", expiry: "", cvv: "",
-    proofNote: "",
-  });
 
   // Form data diri untuk kalkulasi nutrisi
   const [profile, setProfile] = useState({
@@ -110,13 +96,6 @@ export default function Payment({ onBack, onSuccess }) {
   const [profileError, setProfileError] = useState("");
 
   const plan   = plans.find(p => p.id === selectedPlan);
-  const method = paymentMethods.find(m => m.id === selectedMethod);
-
-  const formatCard = (val) => val.replace(/\D/g, "").replace(/(.{4})/g, "$1 ").trim().slice(0, 19);
-  const formatExpiry = (val) => {
-    const v = val.replace(/\D/g, "");
-    return v.length >= 3 ? v.slice(0,2) + "/" + v.slice(2,4) : v;
-  };
 
   const handlePay = async () => {
     setLoading(true);
@@ -138,7 +117,15 @@ export default function Payment({ onBack, onSuccess }) {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      // 3) Backend berhasil — update localStorage
+      // 3) Backend berhasil — dapatkan snap_token (jika sudah ada di backend)
+      // contoh integrasi midtrans (nantinya akan dipanggil di sini):
+      // window.snap.pay(checkoutData.snap_token, {
+      //   onSuccess: function(result){ ... },
+      //   onPending: function(result){ ... },
+      //   onError: function(result){ ... }
+      // });
+      
+      // Untuk sekarang simulasi sukses:
       localStorage.setItem("fitinPremium", "true");
       localStorage.setItem("fitinPlan", selectedPlan);
 
@@ -147,14 +134,14 @@ export default function Payment({ onBack, onSuccess }) {
         localStorage.setItem("fitinUser", JSON.stringify(checkoutData.user));
       }
 
-      setStep(4);
+      setStep(2);
     } catch (e) {
-      // Jika backend error, tetap lanjut ke step 4 sebagai fallback
+      // Jika backend error, tetap lanjut ke step 2 sebagai fallback
       // tapi JANGAN set premium — karena role belum terupdate di DB
       console.error("Checkout error:", e);
       localStorage.setItem("fitinPremium", "true");
       localStorage.setItem("fitinPlan", selectedPlan);
-      setStep(4);
+      setStep(2);
     } finally {
       setLoading(false);
     }
@@ -205,8 +192,8 @@ export default function Payment({ onBack, onSuccess }) {
     onSuccess();
   };
 
-  // ── STEP 4: SUCCESS ──
-  if (step === 4) {
+  // ── STEP 2: SUCCESS ──
+  if (step === 2) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6"
         style={{ background: "linear-gradient(135deg,#0a0a0a,#1a0a0a,#0a0a1a)", fontFamily: "'Trebuchet MS',sans-serif" }}>
@@ -228,7 +215,7 @@ export default function Payment({ onBack, onSuccess }) {
             <p className="text-gray-500 text-xs">Lengkapi data diri untuk mengaktifkan semua fitur</p>
           </div>
           <button
-            onClick={() => setStep(5)}
+            onClick={() => setStep(3)}
             className="w-full py-4 rounded-2xl font-black text-white text-sm tracking-wide transition-all hover:brightness-110"
             style={{ background: "linear-gradient(135deg,#e03030,#a00020)" }}>
             Lengkapi Data Diri →
@@ -238,8 +225,8 @@ export default function Payment({ onBack, onSuccess }) {
     );
   }
 
-  // ── STEP 5: DATA DIRI ──
-  if (step === 5) {
+  // ── STEP 3: DATA DIRI ──
+  if (step === 3) {
     return (
       <div className="min-h-screen" style={{ background: "linear-gradient(135deg,#0a0a0a,#1a0a0a,#0a0a1a)", fontFamily: "'Trebuchet MS',sans-serif" }}>
         <div className="max-w-md mx-auto px-4 py-8">
@@ -346,7 +333,7 @@ export default function Payment({ onBack, onSuccess }) {
         </div>
         {/* Step Indicator */}
         <div className="ml-auto flex items-center gap-2">
-          {[1,2,3].map(s => (
+          {[1,2].map(s => (
             <div key={s} className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all"
                 style={{
@@ -356,7 +343,7 @@ export default function Payment({ onBack, onSuccess }) {
                 }}>
                 {step > s ? "✓" : s}
               </div>
-              {s < 3 && <div className="w-6 h-0.5" style={{ background: step > s ? "#e03030" : "rgba(255,255,255,0.1)" }} />}
+              {s < 2 && <div className="w-6 h-0.5" style={{ background: step > s ? "#e03030" : "rgba(255,255,255,0.1)" }} />}
             </div>
           ))}
         </div>
@@ -422,203 +409,23 @@ export default function Payment({ onBack, onSuccess }) {
               ))}
             </div>
 
-            <button onClick={() => setStep(2)}
-              className="w-full py-4 rounded-2xl font-black text-white text-sm tracking-wide transition-all hover:brightness-110 hover:scale-[1.02]"
+            <button
+              onClick={handlePay}
+              disabled={loading}
+              className="w-full py-4 rounded-2xl font-black text-white text-sm tracking-wide transition-all hover:brightness-110 hover:scale-[1.02] disabled:opacity-70"
               style={{ background: "linear-gradient(135deg,#e03030,#a00020)", boxShadow: "0 8px 24px rgba(224,48,48,0.3)" }}>
-              Lanjut Pilih Pembayaran →
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+                  </svg>
+                  Memproses...
+                </span>
+              ) : "Bayar"}
             </button>
           </div>
         )}
 
-        {/* ── STEP 2: METODE BAYAR ── */}
-        {step === 2 && (
-          <div>
-            <h2 className="text-white text-xl font-black mb-1">Metode Pembayaran</h2>
-            <p className="text-gray-500 text-sm mb-5">Pilih cara pembayaran yang kamu inginkan</p>
-
-            {/* Summary */}
-            <div className="rounded-2xl p-4 mb-5 flex items-center justify-between"
-              style={{ background: "rgba(224,48,48,0.1)", border: "1px solid rgba(224,48,48,0.25)" }}>
-              <div>
-                <p className="text-gray-400 text-xs">Paket dipilih</p>
-                <p className="text-white font-bold">{plan?.label} Premium</p>
-              </div>
-              <p className="text-red-400 font-black text-lg">{plan?.price}</p>
-            </div>
-
-            {/* Bank Transfer */}
-            <p className="text-gray-500 text-xs font-semibold uppercase tracking-widest mb-3">Transfer Bank</p>
-            <div className="grid grid-cols-3 gap-2 mb-5">
-              {paymentMethods.filter(m => m.type === "bank").map(m => (
-                <button key={m.id} onClick={() => setSelectedMethod(m.id)}
-                  className="py-3 rounded-xl font-bold text-sm transition-all"
-                  style={{
-                    background: selectedMethod === m.id ? "rgba(224,48,48,0.15)" : "rgba(255,255,255,0.03)",
-                    border: `2px solid ${selectedMethod === m.id ? "#e03030" : "rgba(255,255,255,0.08)"}`,
-                    color: selectedMethod === m.id ? "#fff" : "#666",
-                  }}>
-                  {m.icon} {m.label}
-                </button>
-              ))}
-            </div>
-
-            {/* E-Wallet */}
-            <p className="text-gray-500 text-xs font-semibold uppercase tracking-widest mb-3">E-Wallet</p>
-            <div className="grid grid-cols-3 gap-2 mb-5">
-              {paymentMethods.filter(m => m.type === "ewallet").map(m => (
-                <button key={m.id} onClick={() => setSelectedMethod(m.id)}
-                  className="py-3 rounded-xl font-bold text-sm transition-all"
-                  style={{
-                    background: selectedMethod === m.id ? "rgba(224,48,48,0.15)" : "rgba(255,255,255,0.03)",
-                    border: `2px solid ${selectedMethod === m.id ? "#e03030" : "rgba(255,255,255,0.08)"}`,
-                    color: selectedMethod === m.id ? "#fff" : "#666",
-                  }}>
-                  {m.icon} {m.label}
-                </button>
-              ))}
-            </div>
-
-            {/* QRIS */}
-            <p className="text-gray-500 text-xs font-semibold uppercase tracking-widest mb-3">QRIS</p>
-            <div className="grid grid-cols-3 gap-2 mb-6">
-              {paymentMethods.filter(m => m.type === "qris").map(m => (
-                <button key={m.id} onClick={() => setSelectedMethod(m.id)}
-                  className="py-3 rounded-xl font-bold text-sm transition-all"
-                  style={{
-                    background: selectedMethod === m.id ? "rgba(224,48,48,0.15)" : "rgba(255,255,255,0.03)",
-                    border: `2px solid ${selectedMethod === m.id ? "#e03030" : "rgba(255,255,255,0.08)"}`,
-                    color: selectedMethod === m.id ? "#fff" : "#666",
-                  }}>
-                  {m.icon} {m.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex gap-3">
-              <button onClick={() => setStep(1)}
-                className="flex-1 py-4 rounded-2xl font-bold text-gray-400 text-sm transition-all hover:text-white"
-                style={{ border: "1px solid rgba(255,255,255,0.1)" }}>
-                ← Kembali
-              </button>
-              <button onClick={() => setStep(3)}
-                className="flex-[2] py-4 rounded-2xl font-black text-white text-sm transition-all hover:brightness-110"
-                style={{ background: "linear-gradient(135deg,#e03030,#a00020)" }}>
-                Lanjut Konfirmasi →
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ── STEP 3: KONFIRMASI ── */}
-        {step === 3 && (
-          <div>
-            <h2 className="text-white text-xl font-black mb-1">Konfirmasi Pembayaran</h2>
-            <p className="text-gray-500 text-sm mb-5">Selesaikan pembayaran sesuai instruksi</p>
-
-            {/* Order Summary */}
-            <div className="rounded-2xl p-5 mb-5"
-              style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
-              <h3 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">Ringkasan Pesanan</h3>
-              <div className="flex justify-between mb-2">
-                <span className="text-gray-400 text-sm">Paket</span>
-                <span className="text-white text-sm font-semibold">{plan?.label} Premium</span>
-              </div>
-              <div className="flex justify-between mb-2">
-                <span className="text-gray-400 text-sm">Metode</span>
-                <span className="text-white text-sm font-semibold">{method?.icon} {method?.label}</span>
-              </div>
-              <div className="border-t border-white/10 my-3" />
-              <div className="flex justify-between">
-                <span className="text-white font-bold">Total</span>
-                <span className="text-red-400 font-black text-lg">{plan?.price}</span>
-              </div>
-            </div>
-
-            {/* Payment Info */}
-            {method?.type !== "qris" && (
-              <div className="rounded-2xl p-5 mb-5"
-                style={{ background: "rgba(26,110,189,0.1)", border: "1px solid rgba(26,110,189,0.25)" }}>
-                <h3 className="text-blue-400 text-xs font-bold uppercase tracking-wider mb-3">
-                  {method?.type === "bank" ? "Instruksi Transfer Bank" : "Instruksi E-Wallet"}
-                </h3>
-                <p className="text-gray-400 text-xs mb-1">
-                  {method?.type === "bank" ? "Nama Bank" : "Platform"}
-                </p>
-                <p className="text-white font-bold mb-3">{method?.label}</p>
-                <p className="text-gray-400 text-xs mb-1">
-                  {method?.type === "bank" ? "Nomor Rekening" : "Nomor"}
-                </p>
-                <div className="flex items-center gap-3 mb-3">
-                  <p className="text-white font-black text-xl tracking-widest">{method?.number}</p>
-                </div>
-                <p className="text-gray-400 text-xs mb-1">Atas Nama</p>
-                <p className="text-white font-bold">{method?.name}</p>
-                <div className="mt-3 p-3 rounded-xl"
-                  style={{ background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.2)" }}>
-                  <p className="text-yellow-400 text-xs font-semibold">⚠️ Penting!</p>
-                  <p className="text-gray-400 text-xs mt-1">
-                    Transfer tepat sebesar <span className="text-white font-bold">{plan?.price}</span>.
-                    Simpan bukti transfer dan klik tombol di bawah setelah transfer.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* QRIS */}
-            {method?.type === "qris" && (
-              <div className="rounded-2xl p-5 mb-5 text-center"
-                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                <h3 className="text-white font-bold mb-4">Scan QR Code</h3>
-                <div className="w-48 h-48 rounded-2xl mx-auto flex items-center justify-center mb-3"
-                  style={{ background: "#fff" }}>
-                  {/* Dummy QR */}
-                  <div className="grid grid-cols-8 gap-0.5 p-3">
-                    {Array.from({length:64}).map((_,i) => (
-                      <div key={i} className="w-4 h-4 rounded-sm"
-                        style={{ background: Math.random() > 0.4 ? "#000" : "#fff" }} />
-                    ))}
-                  </div>
-                </div>
-                <p className="text-gray-400 text-xs">Scan menggunakan GoPay, OVO, DANA, atau aplikasi bank apapun</p>
-                <p className="text-white font-black text-lg mt-2">{plan?.price}</p>
-              </div>
-            )}
-
-            {/* Note */}
-            <Field
-              label="Catatan (opsional)"
-              placeholder="Misal: sudah transfer via BCA mobile"
-              value={form.proofNote}
-              onChange={e => setForm({...form, proofNote: e.target.value})}
-            />
-
-            <div className="flex gap-3">
-              <button onClick={() => setStep(2)}
-                className="flex-1 py-4 rounded-2xl font-bold text-gray-400 text-sm transition-all hover:text-white"
-                style={{ border: "1px solid rgba(255,255,255,0.1)" }}>
-                ← Kembali
-              </button>
-              <button
-                onClick={handlePay}
-                disabled={loading}
-                className="flex-[2] py-4 rounded-2xl font-black text-white text-sm transition-all hover:brightness-110 disabled:opacity-70"
-                style={{ background: "linear-gradient(135deg,#e03030,#a00020)" }}>
-                {loading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
-                    </svg>
-                    Memproses...
-                  </span>
-                ) : "✓ Konfirmasi Pembayaran"}
-              </button>
-            </div>
-
-            <p className="text-gray-600 text-xs text-center mt-4">
-              🔒 Data pembayaran kamu aman dan terenkripsi
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );

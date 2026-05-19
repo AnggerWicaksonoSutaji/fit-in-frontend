@@ -125,23 +125,35 @@ export default function Payment({ onBack, onSuccess }) {
       //   onError: function(result){ ... }
       // });
       
-      // Untuk sekarang simulasi sukses:
-      localStorage.setItem("fitinPremium", "true");
-      localStorage.setItem("fitinPlan", selectedPlan);
+      window.snap.pay(checkoutData.snap_token, {
+        onSuccess: function(result) {
+          // Logika ketika pembayaran sukses
+          localStorage.setItem("fitinPremium", "true");
+          localStorage.setItem("fitinPlan", selectedPlan);
+          
+          if (checkoutData.user) {
+            localStorage.setItem("fitinUser", JSON.stringify(checkoutData.user));
+          }
+          
+          setStep(2); // Lanjut ke halaman sukses
+        },
+        onPending: function(result) {
+          // Logika ketika menunggu pembayaran
+          console.log("Payment pending:", result);
+        },
+        onError: function(result) {
+          // Logika jika pembayaran gagal
+          console.error("Payment error:", result);
+          alert("Pembayaran gagal!");
+        },
+        onClose: function() {
+          console.log("Customer closed the popup without finishing the payment");
+        }
+      });
 
-      // Update user di localStorage dengan role terbaru dari backend
-      if (checkoutData.user) {
-        localStorage.setItem("fitinUser", JSON.stringify(checkoutData.user));
-      }
-
-      setStep(2);
     } catch (e) {
-      // Jika backend error, tetap lanjut ke step 2 sebagai fallback
-      // tapi JANGAN set premium — karena role belum terupdate di DB
       console.error("Checkout error:", e);
-      localStorage.setItem("fitinPremium", "true");
-      localStorage.setItem("fitinPlan", selectedPlan);
-      setStep(2);
+      alert("Gagal memproses pembayaran: " + (e.response?.data?.error || e.message || "Pastikan script Midtrans ter-load"));
     } finally {
       setLoading(false);
     }

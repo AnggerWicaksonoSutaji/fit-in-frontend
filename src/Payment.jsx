@@ -378,12 +378,6 @@ export default function Payment({ onBack, onSuccess }) {
                     background: selectedPlan === p.id ? `${p.color}18` : "rgba(255,255,255,0.03)",
                     border: `2px solid ${selectedPlan === p.id ? p.color : "rgba(255,255,255,0.08)"}`,
                   }}>
-                  {p.badge && (
-                    <span className="absolute top-3 right-3 px-2 py-0.5 rounded-full text-xs font-black"
-                      style={{ background: p.color, color: "#fff" }}>
-                      {p.badge}
-                    </span>
-                  )}
                   <div className="flex items-center gap-3">
                     <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0"
                       style={{ borderColor: selectedPlan === p.id ? p.color : "#444" }}>
@@ -392,8 +386,16 @@ export default function Payment({ onBack, onSuccess }) {
                       )}
                     </div>
                     <div className="flex-1">
-                      <p className="text-white font-bold">{p.label}</p>
-                      <p className="text-gray-500 text-xs">Akses penuh semua fitur premium</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-white font-bold">{p.label}</p>
+                        {p.badge && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black"
+                            style={{ background: p.color, color: "#fff" }}>
+                            {p.badge}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-gray-500 text-xs mt-0.5">Akses penuh semua fitur premium</p>
                     </div>
                     <div className="text-right">
                       <p className="font-black" style={{ color: p.color }}>{p.price}</p>

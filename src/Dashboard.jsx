@@ -139,6 +139,25 @@ const workoutCategories = [
   },
 ];
 
+const PremiumUpgradeButton = ({ onNavigate, text = "Upgrade Sekarang", size = "md", className = "" }) => {
+  const sizeMap = {
+    sm: "py-1 text-xs",
+    md: "py-1.5 text-xs",
+    lg: "py-2 text-sm",
+  };
+  const sizeClasses = sizeMap[size] || sizeMap.md;
+  const classes = `w-full ${sizeClasses} rounded-lg font-bold text-white transition-all hover:brightness-110 ${className}`;
+  return (
+    <button
+      onClick={() => onNavigate('payment')}
+      className={classes}
+      style={{ background: "linear-gradient(135deg,#e03030,#a00020)" }}
+    >
+      {text}
+    </button>
+  );
+};
+
 const navItems = [
   { key: "home", label: "Home", icon: icons.home },
   { key: "workout", label: "Workout Program", icon: icons.workout },
@@ -560,7 +579,7 @@ const VideoContent = () => {
   );
 };
 
-const NutritionContent = () => {
+const NutritionContent = ({ onNavigate }) => {
   const isPremium = localStorage.getItem("fitinPremium") === "true";
   const rawNutrition = localStorage.getItem("fitinNutrition");
   const nutrition = rawNutrition ? JSON.parse(rawNutrition) : null;
@@ -617,7 +636,7 @@ const NutritionContent = () => {
       <div className="mt-5 p-5 rounded-2xl text-center" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
         <div className="text-3xl mb-2">🔒</div>
         <p className="text-gray-400 text-sm mb-3">Meal plan harian dan kalkulasi kalori tersedia di Premium</p>
-        <button className="px-6 py-2.5 rounded-xl font-bold text-white text-sm" style={{ background: "linear-gradient(135deg,#e03030,#a00020)" }}>⭐ Upgrade Premium</button>
+        <PremiumUpgradeButton onNavigate={onNavigate} />
       </div>
     </div>
   );
@@ -980,7 +999,7 @@ export default function Dashboard({ onLogout, onNavigate }) {
       case "home": return <HomeContent user={user} />;
       case "workout": return <WorkoutContent />;
       case "video": return <VideoContent />;
-      case "nutrition": return <NutritionContent />;
+      case "nutrition": return <NutritionContent onNavigate={onNavigate} />;
       case "bmi": return <BMIContent />;
       case "progress": return <ProgressContent />;
       case "schedule": return <ScheduleContent />;

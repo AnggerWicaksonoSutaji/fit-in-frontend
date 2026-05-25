@@ -31,7 +31,7 @@ const HomeContent = ({ user }) => {
   const rawStats = localStorage.getItem("fitinStats");
   const stats = rawStats
     ? JSON.parse(rawStats)
-    : { workouts: 0, calories: 0, streak: 0, goalPct: 0 };
+    : { workouts: 0, calories: 0, streak: 0 };
 
   /**
    * handleStartWorkout
@@ -44,7 +44,6 @@ const HomeContent = ({ user }) => {
       workouts: stats.workouts + 1,
       calories: stats.calories + Math.floor(Math.random() * 200 + 150),
       streak: stats.streak + 1,
-      goalPct: Math.min(100, stats.goalPct + Math.floor(Math.random() * 8 + 5)),
     };
     // Simpan statistik baru ke localStorage
     localStorage.setItem("fitinStats", JSON.stringify(updated));
@@ -94,12 +93,11 @@ const HomeContent = ({ user }) => {
       </div>
 
       {/* ── Kartu Statistik ── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
         {[
           { label: "Workout", value: String(stats.workouts), unit: "sesi",    color: "#e03030", icon: "🔥" },
           { label: "Kalori",  value: String(stats.calories), unit: "kcal",    color: "#1a6ebd", icon: "⚡" },
           { label: "Streak",  value: String(stats.streak),   unit: "hari",    color: "#8b1a8b", icon: "📅" },
-          { label: "Goal",    value: stats.goalPct + "%",    unit: "tercapai", color: "#16a34a", icon: "🎯" },
         ].map((stat) => (
           <div
             key={stat.label}

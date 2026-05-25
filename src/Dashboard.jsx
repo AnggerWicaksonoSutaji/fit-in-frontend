@@ -61,6 +61,7 @@ export default function Dashboard({ onLogout, onNavigate }) {
         setCollapsed={setCollapsed}
         onLogout={onLogout}
         onNavigate={onNavigate}
+        isPremium={isPremium}
       />
 
       <main className="flex-1 overflow-y-auto">

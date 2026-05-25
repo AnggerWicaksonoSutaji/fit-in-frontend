@@ -23,7 +23,7 @@ import Logo from "./Logo";
 import { navItems } from "../data/navItems";
 import { icons } from "../data/icons";
 
-const Sidebar = ({ active, setActive, collapsed, setCollapsed, onLogout, onNavigate }) => (
+const Sidebar = ({ active, setActive, collapsed, setCollapsed, onLogout, onNavigate, isPremium }) => (
   <aside
     className="flex flex-col h-screen sticky top-0 transition-all duration-300 z-30"
     style={{
@@ -125,8 +125,8 @@ const Sidebar = ({ active, setActive, collapsed, setCollapsed, onLogout, onNavig
     </nav>
 
     {/* ── Banner Upgrade Premium ── */}
-    {/* Hanya tampil saat sidebar tidak dilipat */}
-    {!collapsed && (
+    {/* Hanya tampil saat sidebar tidak dilipat dan bukan akun premium */}
+    {!collapsed && !isPremium && (
       <div
         className="mx-3 mb-3 p-3 rounded-xl"
         style={{

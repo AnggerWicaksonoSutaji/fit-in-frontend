@@ -14,11 +14,11 @@ import ScheduleContent from "./pages/ScheduleContent";
 import ProfileContent from "./pages/ProfileContent";
 
 export default function Dashboard({ onLogout, onNavigate }) {
-  const [active, setActive] = useState(() => localStorage.getItem("fitinDashboardTab") || "home");
+  const [active, setActive] = useState(() => sessionStorage.getItem("fitinDashboardTab") || "home");
   const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
-    localStorage.setItem("fitinDashboardTab", active);
+    sessionStorage.setItem("fitinDashboardTab", active);
   }, [active]);
   const isPremium = localStorage.getItem("fitinPremium") === "true";
   const [showPopup, setShowPopup] = useState(!isPremium);

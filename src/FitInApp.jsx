@@ -491,22 +491,18 @@ const RegisterPage = ({ onNavigate }) => {
 ════════════════════════════════════════ */
 export default function App() {
   const [page, setPage] = useState(() => {
-    const token = localStorage.getItem("fitinToken");
-    const savedPage = localStorage.getItem("fitinCurrentPage");
-    if (token) {
-      if (savedPage && ["dashboard", "payment", "data-diri"].includes(savedPage)) {
-        return savedPage;
-      }
-      return "dashboard";
+    const savedPage = sessionStorage.getItem("fitinCurrentPage");
+    if (savedPage && ["dashboard", "payment", "data-diri"].includes(savedPage)) {
+      return savedPage;
     }
     return "welcome";
   });
 
   useEffect(() => {
     if (["dashboard", "payment", "data-diri"].includes(page)) {
-      localStorage.setItem("fitinCurrentPage", page);
+      sessionStorage.setItem("fitinCurrentPage", page);
     } else {
-      localStorage.removeItem("fitinCurrentPage");
+      sessionStorage.removeItem("fitinCurrentPage");
     }
   }, [page]);
 
@@ -529,8 +525,8 @@ export default function App() {
     localStorage.removeItem("fitinProfile");
     localStorage.removeItem("fitinNutrition");
     localStorage.removeItem("fitinStats");
-    localStorage.removeItem("fitinCurrentPage");
-    localStorage.removeItem("fitinDashboardTab");
+    sessionStorage.removeItem("fitinCurrentPage");
+    sessionStorage.removeItem("fitinDashboardTab");
     setPage("welcome");
   };
 

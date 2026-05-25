@@ -2,6 +2,7 @@ import { useState } from "react";
 import axios from "axios";
 import Dashboard from "./Dashboard";
 import Payment from "./Payment";
+import DataDiriPage from "./pages/DataDiriPage";
 
 /* ─── AXIOS BASE CONFIG ─── */
 const api = axios.create({
@@ -211,7 +212,7 @@ const LoginPage = ({ onNavigate }) => {
           if (statusRes.data.is_premium) {
             isPremium = true;
           }
-        } catch (e) { /* skip jika error */ }
+        } catch { /* skip jika error */ }
       }
 
       if (isPremium) {
@@ -240,7 +241,7 @@ const LoginPage = ({ onNavigate }) => {
               fat: profileRes.data.program.lemak_g,
             }));
           }
-        } catch (e) { /* profil belum diisi, skip */ }
+        } catch { /* profil belum diisi, skip */ }
       } else {
         localStorage.removeItem("fitinPremium");
       }
@@ -500,7 +501,7 @@ export default function App() {
           headers: { Authorization: `Bearer ${token}` },
         });
       }
-    } catch (e) { /* skip jika error */ }
+    } catch { /* skip jika error */ }
 
     // Bersihkan semua data localStorage
     localStorage.removeItem("fitinToken");
@@ -519,7 +520,8 @@ export default function App() {
       {page === "login" && <LoginPage onNavigate={setPage} />}
       {page === "register" && <RegisterPage onNavigate={setPage} />}
       {page === "dashboard" && <Dashboard onLogout={handleLogout} onNavigate={setPage} />}
-      {page === "payment" && <Payment onBack={() => setPage("dashboard")} onSuccess={() => setPage("dashboard")} />}
+      {page === "payment" && <Payment onBack={() => setPage("dashboard")} onSuccess={(nextPage) => setPage(nextPage || "dashboard")} />}
+      {page === "data-diri" && <DataDiriPage onSuccess={() => setPage("dashboard")} />}
     </div>
   );
 }

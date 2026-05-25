@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import Dashboard from "./Dashboard";
 import Payment from "./Payment";
@@ -490,7 +490,25 @@ const RegisterPage = ({ onNavigate }) => {
    APP ROOT
 ════════════════════════════════════════ */
 export default function App() {
-  const [page, setPage] = useState("welcome");
+  const [page, setPage] = useState(() => {
+    const token = localStorage.getItem("fitinToken");
+    const savedPage = localStorage.getItem("fitinCurrentPage");
+    if (token) {
+      if (savedPage && ["dashboard", "payment", "data-diri"].includes(savedPage)) {
+        return savedPage;
+      }
+      return "dashboard";
+    }
+    return "welcome";
+  });
+
+  useEffect(() => {
+    if (["dashboard", "payment", "data-diri"].includes(page)) {
+      localStorage.setItem("fitinCurrentPage", page);
+    } else {
+      localStorage.removeItem("fitinCurrentPage");
+    }
+  }, [page]);
 
   const handleLogout = async () => {
     // Panggil backend logout untuk revoke token
@@ -511,6 +529,8 @@ export default function App() {
     localStorage.removeItem("fitinProfile");
     localStorage.removeItem("fitinNutrition");
     localStorage.removeItem("fitinStats");
+    localStorage.removeItem("fitinCurrentPage");
+    localStorage.removeItem("fitinDashboardTab");
     setPage("welcome");
   };
 

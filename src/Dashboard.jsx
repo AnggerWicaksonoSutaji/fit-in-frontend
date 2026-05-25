@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { navItems } from "./data/navItems";
 import Sidebar from "./components/Sidebar";
 import UpgradePopup from "./components/UpgradePopup";
@@ -14,8 +14,12 @@ import ScheduleContent from "./pages/ScheduleContent";
 import ProfileContent from "./pages/ProfileContent";
 
 export default function Dashboard({ onLogout, onNavigate }) {
-  const [active, setActive] = useState("home");
+  const [active, setActive] = useState(() => localStorage.getItem("fitinDashboardTab") || "home");
   const [collapsed, setCollapsed] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem("fitinDashboardTab", active);
+  }, [active]);
   const isPremium = localStorage.getItem("fitinPremium") === "true";
   const [showPopup, setShowPopup] = useState(!isPremium);
 

@@ -22,7 +22,7 @@ const Field = ({ label, placeholder, type = "text", value, onChange, maxLength }
   </div>
 );
 
-export default function DataDiriPage({ onSuccess }) {
+export default function DataDiriPage({ onSuccess, onBack }) {
   const [profile, setProfile] = useState({
     age: "", gender: "male", weight: "", height: "",
     activityLevel: "sedang", goal: "maintenance",
@@ -88,7 +88,18 @@ export default function DataDiriPage({ onSuccess }) {
   };
 
   return (
-    <div className="min-h-screen" style={{ background: "linear-gradient(135deg,#0a0a0a,#1a0a0a,#0a0a1a)", fontFamily: "'Trebuchet MS',sans-serif" }}>
+    <div className="min-h-screen relative" style={{ background: "linear-gradient(135deg,#0a0a0a,#1a0a0a,#0a0a1a)", fontFamily: "'Trebuchet MS',sans-serif" }}>
+      {onBack && (
+        <button
+          onClick={onBack}
+          className="absolute top-4 left-4 z-20 flex items-center justify-center w-10 h-10
+            rounded border border-gray-600 text-gray-300 hover:border-red-500 hover:text-red-400 transition-all"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <polyline points="15,18 9,12 15,6" />
+          </svg>
+        </button>
+      )}
       <div className="max-w-md mx-auto px-4 py-8">
         <div className="text-center mb-6">
           <Logo size={50} />

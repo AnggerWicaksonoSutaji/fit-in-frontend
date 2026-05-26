@@ -21,7 +21,7 @@
  * ─────────────────────────────────────────────────
  */
 
-const ProgramCard = ({ program }) => (
+const ProgramCard = ({ program, hideButton, onChangeProgram }) => (
   <div
     className="rounded-2xl p-5 transition-all duration-300 hover:translate-y-[-2px] hover:shadow-2xl"
     style={{
@@ -66,15 +66,30 @@ const ProgramCard = ({ program }) => (
     </div>
 
     {/* Tombol aksi */}
-    <button
-      className="mt-4 w-full py-2.5 rounded-xl text-sm font-bold tracking-wide transition-all hover:brightness-110 hover:scale-[1.02]"
-      style={{
-        background: `linear-gradient(135deg, ${program.color}, ${program.color}88)`,
-        color: "#fff",
-      }}
-    >
-      Mulai Program
-    </button>
+    {!hideButton && (
+      <button
+        className="mt-4 w-full py-2.5 rounded-xl text-sm font-bold tracking-wide transition-all hover:brightness-110 hover:scale-[1.02]"
+        style={{
+          background: `linear-gradient(135deg, ${program.color}, ${program.color}88)`,
+          color: "#fff",
+        }}
+      >
+        Mulai Program
+      </button>
+    )}
+
+    {onChangeProgram && (
+      <button
+        onClick={onChangeProgram}
+        className="mt-4 w-full py-2.5 rounded-xl text-sm font-bold tracking-wide transition-all hover:brightness-110 hover:scale-[1.02]"
+        style={{
+          background: `linear-gradient(135deg, ${program.color}, ${program.color}88)`,
+          color: "#fff",
+        }}
+      >
+        Ubah Program
+      </button>
+    )}
   </div>
 );
 

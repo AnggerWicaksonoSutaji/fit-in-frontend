@@ -16,17 +16,22 @@
  * ─────────────────────────────────────────────────
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import VideoCard from "../components/VideoCard";
 import CategoryDetailPage from "../components/CategoryDetailPage";
 import { workoutCategories } from "../data/workoutCategories";
 
-const VideoContent = () => {
+const VideoContent = ({ initialCategory, onClearCategory }) => {
   // Cek status premium dari localStorage
   const isPremium = localStorage.getItem("fitinPremium") === "true";
 
   // State untuk menyimpan kategori yang dipilih (null = tampilan grid)
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState(initialCategory);
+
+  // Sinkronisasi selectedCategory saat initialCategory berubah dari parent
+  useEffect(() => {
+    setSelectedCategory(initialCategory);
+  }, [initialCategory]);
 
   // Jika ada kategori yang dipilih, tampilkan halaman detail
   if (selectedCategory) {
@@ -35,6 +40,7 @@ const VideoContent = () => {
         category={selectedCategory}
         onBack={() => {
           setSelectedCategory(null); // Kembali ke grid
+          if (onClearCategory) onClearCategory(); // Hapus state di parent
           window.scrollTo(0, 0);    // Scroll ke atas saat kembali
         }}
       />

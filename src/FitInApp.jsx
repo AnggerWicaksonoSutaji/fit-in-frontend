@@ -537,7 +537,7 @@ export default function App() {
       {page === "register" && <RegisterPage onNavigate={setPage} />}
       {page === "dashboard" && <Dashboard onLogout={handleLogout} onNavigate={setPage} />}
       {page === "payment" && <Payment onBack={() => setPage("dashboard")} onSuccess={(nextPage) => setPage(nextPage || "dashboard")} />}
-      {page === "data-diri" && <DataDiriPage onSuccess={() => setPage("dashboard")} />}
+      {page === "data-diri" && <DataDiriPage onBack={() => setPage("dashboard")} onSuccess={() => setPage("dashboard")} />}
     </div>
   );
 }

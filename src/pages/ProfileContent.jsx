@@ -131,25 +131,27 @@ const ProfileContent = ({ onLogout }) => {
       </div>
 
       {/* ── Banner Upgrade Premium ── */}
-      <div
-        className="rounded-2xl p-5 mb-5 text-center"
-        style={{
-          background: "linear-gradient(135deg, rgba(224,48,48,0.15), rgba(26,110,189,0.15))",
-          border: "1px solid rgba(224,48,48,0.25)",
-        }}
-      >
-        <div className="text-3xl mb-2">⭐</div>
-        <h4 className="text-white font-bold mb-1">Upgrade ke Premium</h4>
-        <p className="text-gray-500 text-xs mb-4">
-          Unlock semua fitur: Progress, Schedule, Video, dan Meal Plan!
-        </p>
-        <button
-          className="w-full py-3 rounded-xl font-bold text-white text-sm transition-all hover:brightness-110"
-          style={{ background: "linear-gradient(135deg,#e03030,#a00020)" }}
+      {!isPremium && (
+        <div
+          className="rounded-2xl p-5 mb-5 text-center"
+          style={{
+            background: "linear-gradient(135deg, rgba(224,48,48,0.15), rgba(26,110,189,0.15))",
+            border: "1px solid rgba(224,48,48,0.25)",
+          }}
         >
-          Upgrade Sekarang
-        </button>
-      </div>
+          <div className="text-3xl mb-2">⭐</div>
+          <h4 className="text-white font-bold mb-1">Upgrade ke Premium</h4>
+          <p className="text-gray-500 text-xs mb-4">
+            Unlock semua fitur: Progress, Schedule, Video, dan Meal Plan!
+          </p>
+          <button
+            className="w-full py-3 rounded-xl font-bold text-white text-sm transition-all hover:brightness-110"
+            style={{ background: "linear-gradient(135deg,#e03030,#a00020)" }}
+          >
+            Upgrade Sekarang
+          </button>
+        </div>
+      )}
 
       {/* ── Tombol Logout ── */}
       <button

@@ -22,6 +22,7 @@ export default function Dashboard({ onLogout, onNavigate }) {
   }, [active]);
   const isPremium = localStorage.getItem("fitinPremium") === "true";
   const [showPopup, setShowPopup] = useState(!isPremium);
+  const [selectedVideoCategory, setSelectedVideoCategory] = useState(null);
 
   const user = JSON.parse(localStorage.getItem("fitinUser") || '{"name":"Athlete"}');
 
@@ -32,15 +33,15 @@ export default function Dashboard({ onLogout, onNavigate }) {
 
   const renderContent = () => {
     switch (active) {
-      case "home": return <HomeContent user={user} />;
+      case "home": return <HomeContent user={user} onNavigate={onNavigate} setActive={setActive} setSelectedVideoCategory={setSelectedVideoCategory} />;
       case "workout": return <WorkoutContent />;
-      case "video": return <VideoContent />;
+      case "video": return <VideoContent initialCategory={selectedVideoCategory} onClearCategory={() => setSelectedVideoCategory(null)} />;
       case "nutrition": return <NutritionContent onNavigate={onNavigate} />;
       case "bmi": return <BMIContent />;
       case "progress": return <ProgressContent />;
       case "schedule": return <ScheduleContent />;
       case "profile": return <ProfileContent onLogout={onLogout} />;
-      default: return <HomeContent user={user} />;
+      default: return <HomeContent user={user} onNavigate={onNavigate} setActive={setActive} setSelectedVideoCategory={setSelectedVideoCategory} />;
     }
   };
 

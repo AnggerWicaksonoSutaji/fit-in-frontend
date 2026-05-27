@@ -524,7 +524,6 @@ export default function App() {
     localStorage.removeItem("fitinPlan");
     localStorage.removeItem("fitinProfile");
     localStorage.removeItem("fitinNutrition");
-    localStorage.removeItem("fitinStats");
     sessionStorage.removeItem("fitinCurrentPage");
     sessionStorage.removeItem("fitinDashboardTab");
     setPage("welcome");

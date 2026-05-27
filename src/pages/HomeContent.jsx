@@ -24,15 +24,12 @@ import { workoutPrograms } from "../data/workoutPrograms";
 import { workoutCategories } from "../data/workoutCategories";
 import { dayColors, dayNames, schedules } from "../data/schedules";
 
-const HomeContent = ({ user, onNavigate, setActive, setSelectedVideoCategory }) => {
+const HomeContent = ({ user, onNavigate, setActive, setSelectedVideoCategory, startGlobalWorkout, stats: propStats, isWorkoutActive, workoutSeconds, liveCalories }) => {
   // Cek apakah pengguna sudah berlangganan premium
   const isPremium = localStorage.getItem("fitinPremium") === "true";
 
-  // Ambil data statistik dari localStorage, gunakan nilai default jika belum ada
-  const rawStats = localStorage.getItem("fitinStats");
-  const stats = rawStats
-    ? JSON.parse(rawStats)
-    : { workouts: 0, calories: 0, streak: 0 };
+  // Ambil data statistik dari props, fallback ke default jika kosong
+  const stats = propStats || { workouts: 0, calories: 0, streak: 0 };
 
   // Ambil data profile untuk mengetahui program (goal) yang aktif
   const rawProfile = localStorage.getItem("fitinProfile");
@@ -53,6 +50,44 @@ const HomeContent = ({ user, onNavigate, setActive, setSelectedVideoCategory }) 
   const todayRoutine = customSchedules[dateStr] || defaultRoutine;
   const isCustomRoutine = !!customSchedules[dateStr];
   const todayColor = isCustomRoutine ? "#f59e0b" : dayColors[dayIndex];
+
+  // Fungsi untuk memulai workout harian dan melihat videonya
+  const handleStartWorkout = () => {
+    // Kumpulkan semua daftar gerakan dari database statis untuk pencocokan
+    const allExercises = workoutCategories.flatMap(c => c.exercises);
+    
+    // Cocokkan nama gerakan di jadwal hari ini dengan database gerakan
+    const matchedExercises = todayRoutine.exercises.map((exName, index) => {
+      const found = allExercises.find(e => e.name.toLowerCase().includes(exName.toLowerCase()) || exName.toLowerCase().includes(e.name.toLowerCase()));
+      return found || {
+        id: `custom-ex-${index}`,
+        name: exName,
+        level: "Sesuai Kemampuan",
+        videoSrc: "",
+        steps: ["Lakukan gerakan sesuai panduan dasar olahraga."]
+      };
+    });
+
+    // Buat "kategori virtual" untuk dirender di halaman video
+    const virtualCategory = {
+      id: "today-workout-virtual",
+      title: todayRoutine.focus,
+      level: isCustomRoutine ? "Custom" : profile.goal.toUpperCase(),
+      locked: false,
+      thumb: "📅",
+      desc: `Sesi latihan hari ini: ${todayRoutine.exercises.join(", ")}.`,
+      exercises: matchedExercises
+    };
+
+    if (setSelectedVideoCategory && setActive) {
+      setSelectedVideoCategory(virtualCategory);
+      setActive("video");
+    }
+
+    if (startGlobalWorkout) {
+      startGlobalWorkout();
+    }
+  };
 
   return (
     <div>
@@ -151,12 +186,29 @@ const HomeContent = ({ user, onNavigate, setActive, setSelectedVideoCategory }) 
           )}
 
           {isPremium && (
-            <button 
-              onClick={() => onNavigate("schedule")}
-              className="mt-4 text-xs font-bold text-gray-400 hover:text-white transition-colors"
-            >
-              Lihat Kalender Penuh &rarr;
-            </button>
+            isWorkoutActive ? (
+              <div className="mt-4 p-4 rounded-xl bg-black/40 border border-red-500/30 flex items-center justify-between">
+                <div>
+                  <p className="text-red-400 text-[10px] font-bold uppercase tracking-widest mb-1">Live Workout</p>
+                  <p className="text-white text-2xl font-black tabular-nums">{Math.floor((workoutSeconds || 0) / 60).toString().padStart(2, "0")}:{((workoutSeconds || 0) % 60).toString().padStart(2, "0")}</p>
+                </div>
+                <div className="text-right">
+                   <p className="text-orange-400 text-[10px] font-bold uppercase tracking-widest mb-1">Kalori Terbakar</p>
+                   <p className="text-orange-400 text-2xl font-black">{(liveCalories || 0).toFixed(1)} <span className="text-xs">kcal</span></p>
+                </div>
+              </div>
+            ) : (
+              <button 
+                onClick={handleStartWorkout}
+                className="mt-4 w-full py-2.5 rounded-xl text-sm font-bold tracking-wide transition-all hover:brightness-110"
+                style={{
+                  background: `linear-gradient(135deg, ${todayColor}, ${todayColor}88)`,
+                  color: "#fff",
+                }}
+              >
+                Mulai Workout
+              </button>
+            )
           )}
         </div>
       </div>

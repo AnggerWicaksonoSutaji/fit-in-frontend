@@ -425,6 +425,19 @@ export default function App() {
         );
       }
 
+    } catch { /* skip jika error */ }
+
+    // Bersihkan semua data localStorage
+    localStorage.removeItem("fitinToken");
+    localStorage.removeItem("fitinUser");
+    localStorage.removeItem("fitinPremium");
+    localStorage.removeItem("fitinPlan");
+    localStorage.removeItem("fitinProfile");
+    localStorage.removeItem("fitinNutrition");
+    sessionStorage.removeItem("fitinCurrentPage");
+    sessionStorage.removeItem("fitinDashboardTab");
+
+
     } catch (err) {}
 
     localStorage.clear();

@@ -18,7 +18,7 @@
 import ExerciseCard from "./ExerciseCard";
 
 const CategoryDetailPage = ({ category, onBack }) => (
-  <div>
+  <div className="relative">
     {/* ── Tombol Kembali ── */}
     <button
       onClick={onBack}
@@ -28,11 +28,10 @@ const CategoryDetailPage = ({ category, onBack }) => (
         border: "1px solid rgba(255,255,255,0.08)",
       }}
     >
-      {/* Icon panah kiri */}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
         <polyline points="15,18 9,12 15,6" />
       </svg>
-      Kembali ke Daftar Video
+      Kembali ke Beranda
     </button>
 
     {/* ── Header Kategori ── */}
@@ -43,44 +42,28 @@ const CategoryDetailPage = ({ category, onBack }) => (
         border: "1px solid rgba(255,255,255,0.08)",
       }}
     >
-      {/* Emoji dekoratif di pojok kanan */}
       <div className="absolute right-6 top-1/2 -translate-y-1/2 text-8xl opacity-20">
         {category.thumb}
       </div>
-
-      {/* Judul dan deskripsi kategori */}
       <h2 className="text-white text-2xl font-black mb-2">{category.title}</h2>
       <p className="text-gray-400 text-sm leading-relaxed mb-3 max-w-xl">{category.desc}</p>
-
-      {/* Badge level + jumlah gerakan */}
       <div className="flex items-center gap-3">
         <span
           className="px-3 py-1 rounded-full text-xs font-bold"
           style={{
-            background:
-              category.level === "Beginner"
-                ? "rgba(34,197,94,0.15)"
-                : category.level === "Intermediate"
-                ? "rgba(251,191,36,0.15)"
-                : "rgba(239,68,68,0.15)",
-            color:
-              category.level === "Beginner"
-                ? "#4ade80"
-                : category.level === "Intermediate"
-                ? "#fbbf24"
-                : "#f87171",
+            background: category.level === "Beginner" ? "rgba(34,197,94,0.15)" : category.level === "Intermediate" ? "rgba(251,191,36,0.15)" : "rgba(239,68,68,0.15)",
+            color: category.level === "Beginner" ? "#4ade80" : category.level === "Intermediate" ? "#fbbf24" : "#f87171",
           }}
         >
           {category.level}
         </span>
-        <span className="text-gray-500 text-xs">{category.exercises.length} gerakan</span>
+        <span className="text-gray-500 text-xs font-medium">{category.exercises.length} gerakan</span>
       </div>
     </div>
 
     {/* ── Daftar Gerakan ── */}
     <h3 className="text-white font-bold text-lg mb-4">💪 Daftar Gerakan</h3>
     <div className="flex flex-col gap-5">
-      {/* Render ExerciseCard untuk setiap gerakan di kategori ini */}
       {category.exercises.map((ex) => (
         <ExerciseCard key={ex.id} exercise={ex} />
       ))}

@@ -1,20 +1,19 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import axios from "axios";
 import Dashboard from "./Dashboard";
 import Payment from "./Payment";
 import DataDiriPage from "./pages/DataDiriPage";
-import AdminDashboard from "./pages/admin/AdminDashboard";
 
-/* ─── AXIOS BASE CONFIG ─── */
+/* ΓöÇΓöÇΓöÇ AXIOS BASE CONFIG ΓöÇΓöÇΓöÇ */
 const api = axios.create({
-  baseURL: "http://127.0.0.1:8000/api",
+  baseURL: "http://localhost:8000/api",
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
   },
 });
 
-/* ─── FIT-IN LOGO SVG ─── */
+/* ΓöÇΓöÇΓöÇ FIT-IN LOGO SVG ΓöÇΓöÇΓöÇ */
 const FitInLogo = ({ size = 120 }) => (
   <svg width={size} height={size} viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M20 80 Q40 40 100 30 Q160 40 180 80 Q160 140 100 170 Q40 140 20 80Z"
@@ -61,7 +60,7 @@ const FitInLogo = ({ size = 120 }) => (
   </svg>
 );
 
-/* ─── ICONS ─── */
+/* ΓöÇΓöÇΓöÇ ICONS ΓöÇΓöÇΓöÇ */
 const UserIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2">
     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -86,7 +85,7 @@ const BackIcon = () => (
   </svg>
 );
 
-/* ─── DARK BACKGROUND ─── */
+/* ΓöÇΓöÇΓöÇ DARK BACKGROUND ΓöÇΓöÇΓöÇ */
 const DarkBg = ({ children, variant = "default" }) => {
   const gradients = {
     default: "from-neutral-950 via-neutral-900 to-neutral-950",
@@ -114,7 +113,7 @@ const DarkBg = ({ children, variant = "default" }) => {
   );
 };
 
-/* ─── INPUT FIELD ─── */
+/* ΓöÇΓöÇΓöÇ INPUT FIELD ΓöÇΓöÇΓöÇ */
 const InputField = ({ icon, placeholder, type = "text", value, onChange }) => (
   <div className="relative flex items-center gap-3 mb-5">
     <span className="absolute left-0 bottom-2 text-gray-500">{icon}</span>
@@ -130,7 +129,7 @@ const InputField = ({ icon, placeholder, type = "text", value, onChange }) => (
   </div>
 );
 
-/* ─── ERROR BOX ─── */
+/* ΓöÇΓöÇΓöÇ ERROR BOX ΓöÇΓöÇΓöÇ */
 const ErrorBox = ({ message }) =>
   message ? (
     <div className="bg-red-900/30 border border-red-700 rounded px-3 py-2 mb-3">
@@ -138,9 +137,9 @@ const ErrorBox = ({ message }) =>
     </div>
   ) : null;
 
-/* ════════════════════════════════════════
-   PAGE 1 — WELCOME
-════════════════════════════════════════ */
+/* ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+   PAGE 1 ΓÇö WELCOME
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ */
 const WelcomePage = ({ onNavigate }) => (
   <DarkBg variant="default">
     <div className="flex flex-col items-center justify-center px-6 py-12 text-center">
@@ -174,9 +173,9 @@ const WelcomePage = ({ onNavigate }) => (
   </DarkBg>
 );
 
-/* ════════════════════════════════════════
-   PAGE 2 — LOGIN
-════════════════════════════════════════ */
+/* ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+   PAGE 2 ΓÇö LOGIN
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ */
 const LoginPage = ({ onNavigate }) => {
   const [form, setForm] = useState({ username: "", password: "" });
   const [loading, setLoading] = useState(false);
@@ -191,82 +190,71 @@ const LoginPage = ({ onNavigate }) => {
     setLoading(true);
 
     try {
-      let actualUsername = form.username;
-      let isAdminAttempt = false;
-
-      // Jika username berakhiran /admin, berarti ini mencoba login sebagai admin
-      if (actualUsername.endsWith("/admin")) {
-        isAdminAttempt = true;
-        actualUsername = actualUsername.replace("/admin", "");
-      }
-
+      // Γ£à Pakai axios ΓÇö lebih singkat dan otomatis parse JSON
       const { data } = await api.post("/login", {
-        username: actualUsername,
+        username: form.username,
         password: form.password,
       });
-
-      // Validasi tambahan: Jika mencoba login admin tapi rolenya bukan admin
-      if (isAdminAttempt && data.user.role !== "admin") {
-        setError("Akses ditolak: Akun ini bukan admin.");
-        setLoading(false);
-        return;
-      }
 
       // Simpan token & user ke localStorage
       localStorage.setItem("fitinToken", data.token);
       localStorage.setItem("fitinUser", JSON.stringify(data.user));
 
-      if (data.user.role === "admin") {
-        onNavigate("admin");
-      } else {
-        let isPremium = data.user.role === "premium";
-        if (!isPremium) {
-          try {
-            const statusRes = await api.get("/payment/status", {
-              headers: { Authorization: `Bearer ${data.token}` },
-            });
-            if (statusRes.data.is_premium) {
-              isPremium = true;
-            }
-          } catch { }
-        }
+      // Cek premium status ΓÇö baik dari role user ATAU dari payment status
+      let isPremium = data.user.role === "premium";
 
-        if (isPremium) {
-          localStorage.setItem("fitinPremium", "true");
-          try {
-            const profileRes = await api.get("/profile", {
-              headers: { Authorization: `Bearer ${data.token}` },
-            });
-            if (profileRes.data.profile) {
-              localStorage.setItem("fitinProfile", JSON.stringify({
-                age: String(profileRes.data.profile.umur),
-                gender: profileRes.data.profile.jenis_kelamin === "Laki-laki" ? "male" : "female",
-                weight: String(profileRes.data.profile.berat_badan),
-                height: String(profileRes.data.profile.tinggi_badan),
-                activityLevel: profileRes.data.profile.tingkat_aktivitas,
-                goal: profileRes.data.profile.goal,
-              }));
-            }
-            if (profileRes.data.program) {
-              localStorage.setItem("fitinNutrition", JSON.stringify({
-                tdee: profileRes.data.program.tdee,
-                targetCal: profileRes.data.program.target_kalori,
-                protein: profileRes.data.program.protein_g,
-                carbs: profileRes.data.program.karbo_g,
-                fat: profileRes.data.program.lemak_g,
-              }));
-            }
-          } catch { }
-        } else {
-          localStorage.removeItem("fitinPremium");
-        }
-        onNavigate("dashboard");
+      // Double-check dengan endpoint /payment/status (jaga-jaga role belum sync)
+      if (!isPremium) {
+        try {
+          const statusRes = await api.get("/payment/status", {
+            headers: { Authorization: `Bearer ${data.token}` },
+          });
+          if (statusRes.data.is_premium) {
+            isPremium = true;
+          }
+        } catch { /* skip jika error */ }
       }
+
+      if (isPremium) {
+        localStorage.setItem("fitinPremium", "true");
+        // Fetch profil & nutrisi dari backend
+        try {
+          const profileRes = await api.get("/profile", {
+            headers: { Authorization: `Bearer ${data.token}` },
+          });
+          if (profileRes.data.profile) {
+            localStorage.setItem("fitinProfile", JSON.stringify({
+              age: String(profileRes.data.profile.umur),
+              gender: profileRes.data.profile.jenis_kelamin === "Laki-laki" ? "male" : "female",
+              weight: String(profileRes.data.profile.berat_badan),
+              height: String(profileRes.data.profile.tinggi_badan),
+              activityLevel: profileRes.data.profile.tingkat_aktivitas,
+              goal: profileRes.data.profile.goal,
+            }));
+          }
+          if (profileRes.data.program) {
+            localStorage.setItem("fitinNutrition", JSON.stringify({
+              tdee: profileRes.data.program.tdee,
+              targetCal: profileRes.data.program.target_kalori,
+              protein: profileRes.data.program.protein_g,
+              carbs: profileRes.data.program.karbo_g,
+              fat: profileRes.data.program.lemak_g,
+            }));
+          }
+        } catch { /* profil belum diisi, skip */ }
+      } else {
+        localStorage.removeItem("fitinPremium");
+      }
+
+      onNavigate("dashboard");
+
     } catch (err) {
       if (err.response) {
+        // Error dari server Laravel (401, 422, dll)
         setError(err.response.data.message || "Login gagal.");
       } else if (err.request) {
-        setError("Tidak bisa terhubung ke server.");
+        // Server tidak merespon sama sekali
+        setError("Tidak bisa terhubung ke server. Pastikan Laravel sudah jalan di port 8000.");
       } else {
         setError("Terjadi kesalahan. Coba lagi.");
       }
@@ -345,9 +333,9 @@ const LoginPage = ({ onNavigate }) => {
   );
 };
 
-/* ════════════════════════════════════════
-   PAGE 3 — REGISTER
-════════════════════════════════════════ */
+/* ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+   PAGE 3 ΓÇö REGISTER
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ */
 const RegisterPage = ({ onNavigate }) => {
   const [form, setForm] = useState({ username: "", email: "", password: "", confirm: "" });
   const [loading, setLoading] = useState(false);
@@ -372,6 +360,7 @@ const RegisterPage = ({ onNavigate }) => {
     setLoading(true);
 
     try {
+      // Γ£à Pakai axios
       const { data } = await api.post("/register", {
         username: form.username,
         email: form.email,
@@ -387,6 +376,7 @@ const RegisterPage = ({ onNavigate }) => {
 
     } catch (err) {
       if (err.response) {
+        // Tangkap error validasi Laravel (422)
         const errors = err.response.data.errors;
         if (errors) {
           const firstError = Object.values(errors)[0][0];
@@ -395,7 +385,7 @@ const RegisterPage = ({ onNavigate }) => {
           setError(err.response.data.message || "Registrasi gagal.");
         }
       } else if (err.request) {
-        setError("Tidak bisa terhubung ke server.");
+        setError("Tidak bisa terhubung ke server. Pastikan Laravel sudah jalan di port 8000.");
       } else {
         setError("Terjadi kesalahan. Coba lagi.");
       }
@@ -430,7 +420,7 @@ const RegisterPage = ({ onNavigate }) => {
 
         {success ? (
           <div className="text-center py-8">
-            <div className="text-green-400 text-4xl mb-3">✓</div>
+            <div className="text-green-400 text-4xl mb-3">Γ£ô</div>
             <p className="text-green-400 text-sm font-semibold">Registrasi berhasil!</p>
             <p className="text-gray-500 text-xs mt-1">Mengalihkan ke halaman login...</p>
           </div>
@@ -496,28 +486,20 @@ const RegisterPage = ({ onNavigate }) => {
   );
 };
 
-/* ════════════════════════════════════════
+/* ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
    APP ROOT
-════════════════════════════════════════ */
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ */
 export default function App() {
   const [page, setPage] = useState(() => {
     const savedPage = sessionStorage.getItem("fitinCurrentPage");
-    if (savedPage && ["dashboard", "payment", "data-diri", "admin"].includes(savedPage)) {
+    if (savedPage && ["dashboard", "payment", "data-diri"].includes(savedPage)) {
       return savedPage;
-    }
-    const user = localStorage.getItem("fitinUser");
-    if (user) {
-      try {
-        const parsed = JSON.parse(user);
-        if (parsed.role === "admin") return "admin";
-        return "dashboard";
-      } catch { }
     }
     return "welcome";
   });
 
   useEffect(() => {
-    if (["dashboard", "payment", "data-diri", "admin"].includes(page)) {
+    if (["dashboard", "payment", "data-diri"].includes(page)) {
       sessionStorage.setItem("fitinCurrentPage", page);
     } else {
       sessionStorage.removeItem("fitinCurrentPage");
@@ -525,6 +507,7 @@ export default function App() {
   }, [page]);
 
   const handleLogout = async () => {
+    // Panggil backend logout untuk revoke token
     try {
       const token = localStorage.getItem("fitinToken");
       if (token) {
@@ -532,8 +515,9 @@ export default function App() {
           headers: { Authorization: `Bearer ${token}` },
         });
       }
-    } catch { }
+    } catch { /* skip jika error */ }
 
+    // Bersihkan semua data localStorage
     localStorage.removeItem("fitinToken");
     localStorage.removeItem("fitinUser");
     localStorage.removeItem("fitinPremium");
@@ -553,7 +537,6 @@ export default function App() {
       {page === "dashboard" && <Dashboard onLogout={handleLogout} onNavigate={setPage} />}
       {page === "payment" && <Payment onBack={() => setPage("dashboard")} onSuccess={(nextPage) => setPage(nextPage || "dashboard")} />}
       {page === "data-diri" && <DataDiriPage onBack={() => setPage("dashboard")} onSuccess={() => setPage("dashboard")} />}
-      {page === "admin" && <AdminDashboard onLogout={handleLogout} />}
     </div>
   );
 }

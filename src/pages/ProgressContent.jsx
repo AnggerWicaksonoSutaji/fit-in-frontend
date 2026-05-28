@@ -146,7 +146,7 @@ const ProgressContent = ({ stats: propStats, user }) => {
   const stats = propStats || { workouts: 0, calories: 0, streak: 0 };
 
   // Ambil daily history dari localStorage sesuai ID user
-  const userId = user?.id || "guest";
+  const userId = user?.id || user?.email || user?.name || "guest";
   const rawHistory = localStorage.getItem(`fitinDailyHistory_${userId}`);
   const history = rawHistory ? JSON.parse(rawHistory) : {};
 

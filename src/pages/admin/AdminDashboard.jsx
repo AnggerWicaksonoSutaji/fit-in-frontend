@@ -12,20 +12,19 @@ export default function AdminDashboard({ onLogout }) {
 
   useEffect(() => {
     const token = localStorage.getItem("fitinToken");
-    if (!token) return;
+    const headers = {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    };
 
-    fetch("http://127.0.0.1:8001/api/admin/dashboard", {
-      headers: { Authorization: `Bearer ${token}` }
-    })
+    fetch("http://127.0.0.1:8000/api/admin/dashboard", { headers })
       .then((res) => res.json())
       .then((data) => {
         setDashboard(data);
       })
       .catch((err) => console.error(err));
 
-    fetch("http://127.0.0.1:8001/api/admin/users", {
-      headers: { Authorization: `Bearer ${token}` }
-    })
+    fetch("http://127.0.0.1:8000/api/admin/users", { headers })
       .then((res) => res.json())
       .then((data) => {
         setUsers(data);
@@ -52,50 +51,43 @@ export default function AdminDashboard({ onLogout }) {
           marginBottom: "40px",
         }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div>
-            <h1
-              style={{
-                fontSize: "42px",
-                fontWeight: "700",
-                marginBottom: "10px",
-                background: "linear-gradient(to right, #38bdf8, #ef4444)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-              }}
-            >
-              FIT-IN ADMIN
-            </h1>
+        <h1
+          style={{
+            fontSize: "42px",
+            fontWeight: "700",
+            marginBottom: "10px",
+            background: "linear-gradient(to right, #38bdf8, #ef4444)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+          }}
+        >
+          FIT-IN ADMIN
+        </h1>
 
-            <p
-              style={{
-                color: "#94a3b8",
-                fontSize: "16px",
-              }}
-            >
-              Monitor user activity and manage FIT-IN system.
-            </p>
-          </div>
-          
-          <button
-            onClick={onLogout}
-            style={{
-              background: "#ef4444",
-              color: "white",
-              padding: "10px 20px",
-              borderRadius: "8px",
-              border: "none",
-              cursor: "pointer",
-              fontWeight: "600",
-              fontSize: "14px",
-              transition: "0.2s"
-            }}
-            onMouseOver={(e) => e.target.style.background = "#dc2626"}
-            onMouseOut={(e) => e.target.style.background = "#ef4444"}
-          >
-            LOGOUT
-          </button>
-        </div>
+        <p
+          style={{
+            color: "#94a3b8",
+            fontSize: "16px",
+          }}
+        >
+          Monitor user activity and manage FIT-IN system.
+        </p>
+
+        <button
+          onClick={onLogout}
+          style={{
+            marginTop: "20px",
+            padding: "10px 20px",
+            backgroundColor: "#ef4444",
+            color: "white",
+            border: "none",
+            borderRadius: "8px",
+            cursor: "pointer",
+            fontWeight: "bold",
+          }}
+        >
+          Logout Admin
+        </button>
       </div>
 
       {/* CARDS */}

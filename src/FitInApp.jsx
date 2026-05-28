@@ -4,7 +4,7 @@ import axios from "axios";
 import Dashboard from "./Dashboard";
 import Payment from "./Payment";
 import DataDiriPage from "./pages/DataDiriPage";
-import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminApp from "./pages/admin/AdminApp"; // ← pakai AdminApp baru
 
 /* ================= AXIOS ================= */
 
@@ -55,38 +55,28 @@ const FitInLogo = ({ size = 120 }) => (
 
 /* ================= BACKGROUND ================= */
 
-const DarkBg = ({ children }) => {
-  return (
-    <div className="min-h-screen bg-black text-white flex items-center justify-center">
-      <div className="w-full">{children}</div>
-    </div>
-  );
-};
+const DarkBg = ({ children }) => (
+  <div className="min-h-screen bg-black text-white flex items-center justify-center">
+    <div className="w-full">{children}</div>
+  </div>
+);
 
 /* ================= INPUT ================= */
 
-const InputField = ({
-  placeholder,
-  type = "text",
-  value,
-  onChange,
-}) => {
-  return (
-    <input
-      type={type}
-      placeholder={placeholder}
-      value={value}
-      onChange={onChange}
-      className="w-full bg-neutral-900 border border-neutral-700 rounded-lg px-4 py-3 text-white mb-4 outline-none focus:border-red-500"
-    />
-  );
-};
+const InputField = ({ placeholder, type = "text", value, onChange }) => (
+  <input
+    type={type}
+    placeholder={placeholder}
+    value={value}
+    onChange={onChange}
+    className="w-full bg-neutral-900 border border-neutral-700 rounded-lg px-4 py-3 text-white mb-4 outline-none focus:border-red-500"
+  />
+);
 
 /* ================= ERROR ================= */
 
 const ErrorBox = ({ message }) => {
   if (!message) return null;
-
   return (
     <div className="bg-red-900/40 border border-red-500 rounded-lg p-3 mb-4 text-sm text-red-300">
       {message}
@@ -96,50 +86,37 @@ const ErrorBox = ({ message }) => {
 
 /* ================= WELCOME ================= */
 
-const WelcomePage = ({ onNavigate }) => {
-  return (
-    <DarkBg>
-      <div className="max-w-md mx-auto text-center px-6">
-        <div className="mb-8 flex justify-center">
-          <FitInLogo />
-        </div>
-
-        <h1 className="text-4xl font-bold mb-3">FIT-IN</h1>
-
-        <p className="text-gray-400 mb-10">
-          Welcome to Fitness Intelligent App
-        </p>
-
-        <div className="space-y-4">
-          <button
-            onClick={() => onNavigate("login")}
-            className="w-full bg-red-600 hover:bg-red-700 py-3 rounded-lg font-bold transition"
-          >
-            LOGIN
-          </button>
-
-          <button
-            onClick={() => onNavigate("register")}
-            className="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-lg font-bold transition"
-          >
-            REGISTER
-          </button>
-        </div>
+const WelcomePage = ({ onNavigate }) => (
+  <DarkBg>
+    <div className="max-w-md mx-auto text-center px-6">
+      <div className="mb-8 flex justify-center">
+        <FitInLogo />
       </div>
-    </DarkBg>
-  );
-};
+      <h1 className="text-4xl font-bold mb-3">FIT-IN</h1>
+      <p className="text-gray-400 mb-10">Welcome to Fitness Intelligent App</p>
+      <div className="space-y-4">
+        <button
+          onClick={() => onNavigate("login")}
+          className="w-full bg-red-600 hover:bg-red-700 py-3 rounded-lg font-bold transition"
+        >
+          LOGIN
+        </button>
+        <button
+          onClick={() => onNavigate("register")}
+          className="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-lg font-bold transition"
+        >
+          REGISTER
+        </button>
+      </div>
+    </div>
+  </DarkBg>
+);
 
 /* ================= LOGIN ================= */
 
 const LoginPage = ({ onNavigate }) => {
-  const [form, setForm] = useState({
-    username: "",
-    password: "",
-  });
-
+  const [form, setForm] = useState({ username: "", password: "" });
   const [loading, setLoading] = useState(false);
-
   const [error, setError] = useState("");
 
   const handleLogin = async () => {
@@ -147,40 +124,29 @@ const LoginPage = ({ onNavigate }) => {
       setError("Semua field wajib diisi");
       return;
     }
-
     setLoading(true);
     setError("");
-
     try {
       const response = await api.post("/login", {
         username: form.username,
         password: form.password,
       });
-
       const data = response.data;
-
       localStorage.setItem("fitinToken", data.token);
       localStorage.setItem("fitinUser", JSON.stringify(data.user));
 
-      /* ================= ADMIN ================= */
-
+      // Cek role → arahkan ke halaman yang sesuai
       if (data.user.role === "admin") {
         onNavigate("admin");
-        return;
+      } else {
+        onNavigate("dashboard");
       }
-
-      /* ================= USER ================= */
-
-      onNavigate("dashboard");
-
     } catch (err) {
-
       if (err.response) {
         setError(err.response.data.message || "Login gagal");
       } else {
         setError("Server backend belum berjalan");
       }
-
     } finally {
       setLoading(false);
     }
@@ -189,47 +155,28 @@ const LoginPage = ({ onNavigate }) => {
   return (
     <DarkBg>
       <div className="max-w-md mx-auto px-6">
-
         <button
           onClick={() => onNavigate("welcome")}
           className="mb-8 text-gray-400 hover:text-white"
         >
           ← Kembali
         </button>
-
         <div className="flex justify-center mb-6">
           <FitInLogo />
         </div>
-
-        <h1 className="text-3xl font-bold text-center mb-8">
-          LOGIN
-        </h1>
-
+        <h1 className="text-3xl font-bold text-center mb-8">LOGIN</h1>
         <ErrorBox message={error} />
-
         <InputField
-          placeholder="Email / Username"
+          placeholder="Email"
           value={form.username}
-          onChange={(e) =>
-            setForm({
-              ...form,
-              username: e.target.value,
-            })
-          }
+          onChange={(e) => setForm({ ...form, username: e.target.value })}
         />
-
         <InputField
           type="password"
           placeholder="Password"
           value={form.password}
-          onChange={(e) =>
-            setForm({
-              ...form,
-              password: e.target.value,
-            })
-          }
+          onChange={(e) => setForm({ ...form, password: e.target.value })}
         />
-
         <button
           onClick={handleLogin}
           disabled={loading}
@@ -237,7 +184,6 @@ const LoginPage = ({ onNavigate }) => {
         >
           {loading ? "Loading..." : "LOGIN"}
         </button>
-
       </div>
     </DarkBg>
   );
@@ -246,58 +192,35 @@ const LoginPage = ({ onNavigate }) => {
 /* ================= REGISTER ================= */
 
 const RegisterPage = ({ onNavigate }) => {
-
-  const [form, setForm] = useState({
-    username: "",
-    email: "",
-    password: "",
-    confirm: "",
-  });
-
+  const [form, setForm] = useState({ name: "", email: "", password: "", confirm: "" });
   const [loading, setLoading] = useState(false);
-
   const [error, setError] = useState("");
 
   const handleRegister = async () => {
-
-    if (
-      !form.username ||
-      !form.email ||
-      !form.password ||
-      !form.confirm
-    ) {
+    if (!form.name || !form.email || !form.password || !form.confirm) {
       setError("Semua field wajib diisi");
       return;
     }
-
     if (form.password !== form.confirm) {
       setError("Password tidak cocok");
       return;
     }
-
     try {
-
       setLoading(true);
-
       await api.post("/register", {
-        username: form.username,
+        username: form.name,
         email: form.email,
         password: form.password,
         password_confirmation: form.confirm,
       });
-
-      alert("Register berhasil");
-
+      alert("Register berhasil! Silakan login.");
       onNavigate("login");
-
     } catch (err) {
-
       if (err.response) {
         setError(err.response.data.message || "Register gagal");
       } else {
         setError("Server backend belum berjalan");
       }
-
     } finally {
       setLoading(false);
     }
@@ -306,70 +229,39 @@ const RegisterPage = ({ onNavigate }) => {
   return (
     <DarkBg>
       <div className="max-w-md mx-auto px-6">
-
         <button
           onClick={() => onNavigate("welcome")}
           className="mb-8 text-gray-400 hover:text-white"
         >
           ← Kembali
         </button>
-
         <div className="flex justify-center mb-6">
           <FitInLogo />
         </div>
-
-        <h1 className="text-3xl font-bold text-center mb-8">
-          REGISTER
-        </h1>
-
+        <h1 className="text-3xl font-bold text-center mb-8">REGISTER</h1>
         <ErrorBox message={error} />
-
         <InputField
-          placeholder="Username"
-          value={form.username}
-          onChange={(e) =>
-            setForm({
-              ...form,
-              username: e.target.value,
-            })
-          }
+          placeholder="Nama Lengkap"
+          value={form.name}
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
         />
-
         <InputField
           placeholder="Email"
           value={form.email}
-          onChange={(e) =>
-            setForm({
-              ...form,
-              email: e.target.value,
-            })
-          }
+          onChange={(e) => setForm({ ...form, email: e.target.value })}
         />
-
         <InputField
           type="password"
           placeholder="Password"
           value={form.password}
-          onChange={(e) =>
-            setForm({
-              ...form,
-              password: e.target.value,
-            })
-          }
+          onChange={(e) => setForm({ ...form, password: e.target.value })}
         />
-
         <InputField
           type="password"
           placeholder="Confirm Password"
           value={form.confirm}
-          onChange={(e) =>
-            setForm({
-              ...form,
-              confirm: e.target.value,
-            })
-          }
+          onChange={(e) => setForm({ ...form, confirm: e.target.value })}
         />
-
         <button
           onClick={handleRegister}
           disabled={loading}
@@ -377,7 +269,6 @@ const RegisterPage = ({ onNavigate }) => {
         >
           {loading ? "Loading..." : "REGISTER"}
         </button>
-
       </div>
     </DarkBg>
   );
@@ -385,104 +276,50 @@ const RegisterPage = ({ onNavigate }) => {
 
 /* ================= APP ROOT ================= */
 
-export default function App() {
-
+export default function FitInApp() {
   const [page, setPage] = useState("welcome");
 
+  // Cek localStorage saat pertama buka — kalau sudah login, langsung masuk
   useEffect(() => {
-
     const user = localStorage.getItem("fitinUser");
-
     if (user) {
-
       const parsedUser = JSON.parse(user);
-
       if (parsedUser.role === "admin") {
         setPage("admin");
       } else {
         setPage("dashboard");
       }
     }
-
   }, []);
 
   const handleLogout = async () => {
-
     try {
-
       const token = localStorage.getItem("fitinToken");
-
       if (token) {
-
-        await api.post(
-          "/logout",
-          {},
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        await api.post("/logout", {}, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
       }
-
-    } catch { /* skip jika error */ }
-
-    // Bersihkan semua data localStorage
-    localStorage.removeItem("fitinToken");
-    localStorage.removeItem("fitinUser");
-    localStorage.removeItem("fitinPremium");
-    localStorage.removeItem("fitinPlan");
-    localStorage.removeItem("fitinProfile");
-    localStorage.removeItem("fitinNutrition");
-    sessionStorage.removeItem("fitinCurrentPage");
-    sessionStorage.removeItem("fitinDashboardTab");
-
-
     } catch (err) {}
-
     localStorage.clear();
-
     setPage("welcome");
   };
 
   return (
     <div className="min-h-screen">
 
-      {page === "welcome" && (
-        <WelcomePage onNavigate={setPage} />
-      )}
+      {/* ── HALAMAN USER BIASA ── */}
+      {page === "welcome"   && <WelcomePage onNavigate={setPage} />}
+      {page === "login"     && <LoginPage onNavigate={setPage} />}
+      {page === "register"  && <RegisterPage onNavigate={setPage} />}
+      {page === "dashboard" && <Dashboard onLogout={handleLogout} onNavigate={setPage} />}
+      {page === "payment"   && <Payment onBack={() => setPage("dashboard")} />}
+      {page === "data-diri" && <DataDiriPage onBack={() => setPage("dashboard")} />}
 
-      {page === "login" && (
-        <LoginPage onNavigate={setPage} />
-      )}
-
-      {page === "register" && (
-        <RegisterPage onNavigate={setPage} />
-      )}
-
-      {page === "dashboard" && (
-        <Dashboard
-          onLogout={handleLogout}
-          onNavigate={setPage}
-        />
-      )}
-
-      {page === "payment" && (
-        <Payment
-          onBack={() => setPage("dashboard")}
-        />
-      )}
-
-      {page === "data-diri" && (
-        <DataDiriPage
-          onBack={() => setPage("dashboard")}
-        />
-      )}
-
+      {/* ── HALAMAN ADMIN ── */}
+      {/* Hanya masuk ke sini kalau role === "admin" saat login */}
       {page === "admin" && (
-        <AdminDashboard
-          onLogout={handleLogout}
-        />
+        <AdminApp onLogout={handleLogout} />
       )}
 
     </div>

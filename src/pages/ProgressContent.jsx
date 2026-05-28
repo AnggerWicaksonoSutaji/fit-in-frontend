@@ -139,14 +139,15 @@ const MonthlyBarChart = ({ days, history, metric, color }) => {
   );
 };
 
-const ProgressContent = ({ stats: propStats }) => {
+const ProgressContent = ({ stats: propStats, user }) => {
   const isPremium = localStorage.getItem("fitinPremium") === "true";
   if (!isPremium) return <LockedPage title="Progress Tracking" emoji="📊" />;
 
   const stats = propStats || { workouts: 0, calories: 0, streak: 0 };
 
-  // Ambil daily history dari localStorage
-  const rawHistory = localStorage.getItem("fitinDailyHistory");
+  // Ambil daily history dari localStorage sesuai ID user
+  const userId = user?.id || "guest";
+  const rawHistory = localStorage.getItem(`fitinDailyHistory_${userId}`);
   const history = rawHistory ? JSON.parse(rawHistory) : {};
 
   const days = getLast30Days();

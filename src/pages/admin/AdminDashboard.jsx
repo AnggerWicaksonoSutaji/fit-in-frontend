@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-export default function AdminDashboard() {
+export default function AdminDashboard({ onLogout }) {
 
   const [dashboard, setDashboard] = useState({
     total_users: 0,
@@ -11,14 +11,19 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
 
   useEffect(() => {
+    const token = localStorage.getItem("fitinToken");
+    const headers = {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    };
 
-    fetch("http://127.0.0.1:8001/api/admin/dashboard")
+    fetch("http://127.0.0.1:8000/api/admin/dashboard", { headers })
       .then((res) => res.json())
       .then((data) => {
         setDashboard(data);
       });
 
-    fetch("http://127.0.0.1:8001/api/admin/users")
+    fetch("http://127.0.0.1:8000/api/admin/users", { headers })
       .then((res) => res.json())
       .then((data) => {
         setUsers(data);
@@ -65,6 +70,22 @@ export default function AdminDashboard() {
         >
           Monitor user activity and manage FIT-IN system.
         </p>
+
+        <button
+          onClick={onLogout}
+          style={{
+            marginTop: "20px",
+            padding: "10px 20px",
+            backgroundColor: "#ef4444",
+            color: "white",
+            border: "none",
+            borderRadius: "8px",
+            cursor: "pointer",
+            fontWeight: "bold",
+          }}
+        >
+          Logout Admin
+        </button>
       </div>
 
       {/* CARDS */}

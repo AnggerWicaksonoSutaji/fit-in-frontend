@@ -25,6 +25,27 @@ export default function Dashboard({ onLogout, onNavigate }) {
   const [selectedVideoCategory, setSelectedVideoCategory] = useState(null);
 
   const user = JSON.parse(localStorage.getItem("fitinUser") || '{"name":"Athlete"}');
+  // Pastikan userId selalu valid — gunakan id, fallback ke email, lalu ke name
+  const userId = user?.id || user?.email || user?.name || "guest";
+
+  // ── Auto-migrate data lama (sebelum fitur isolasi per-user) ──
+  if (userId !== "guest") {
+    const oldStats = localStorage.getItem("fitinStats");
+    const newStats = localStorage.getItem(`fitinStats_${userId}`);
+    if (oldStats && !newStats) {
+      localStorage.setItem(`fitinStats_${userId}`, oldStats);
+    }
+    const oldDate = localStorage.getItem("fitinLastWorkoutDate");
+    const newDate = localStorage.getItem(`fitinLastWorkoutDate_${userId}`);
+    if (oldDate && !newDate) {
+      localStorage.setItem(`fitinLastWorkoutDate_${userId}`, oldDate);
+    }
+    const oldHistory = localStorage.getItem("fitinDailyHistory");
+    const newHistory = localStorage.getItem(`fitinDailyHistory_${userId}`);
+    if (oldHistory && !newHistory) {
+      localStorage.setItem(`fitinDailyHistory_${userId}`, oldHistory);
+    }
+  }
 
   const handleUpgrade = () => {
     setShowPopup(false);
@@ -39,7 +60,6 @@ export default function Dashboard({ onLogout, onNavigate }) {
   const timerRef = useRef(null);
 
   const [stats, setStats] = useState(() => {
-    const userId = user?.id || "guest";
     const raw = localStorage.getItem(`fitinStats_${userId}`);
     const parsed = raw ? JSON.parse(raw) : { workouts: 0, calories: 0, streak: 0 };
 
@@ -134,7 +154,6 @@ export default function Dashboard({ onLogout, onNavigate }) {
 
     // ── Logika Streak: tambah 1x per hari ──
     const todayStr = new Date().toISOString().slice(0, 10);
-    const userId = user?.id || "guest";
     const lastDate = localStorage.getItem(`fitinLastWorkoutDate_${userId}`);
 
     if (lastDate !== todayStr) {
@@ -165,7 +184,6 @@ export default function Dashboard({ onLogout, onNavigate }) {
     const todayStr = new Date().toISOString().slice(0, 10);
 
     setStats((prev) => {
-      const userId = user?.id || "guest";
       const newStats = {
         ...prev,
         workouts: prev.workouts + 1,

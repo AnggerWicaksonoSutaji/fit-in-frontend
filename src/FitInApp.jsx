@@ -4,7 +4,11 @@ import axios from "axios";
 import Dashboard from "./Dashboard";
 import Payment from "./Payment";
 import DataDiriPage from "./pages/DataDiriPage";
+<<<<<<< Updated upstream
 import AdminApp from "./pages/admin/AdminApp"; // ← pakai AdminApp baru
+=======
+import AdminApp from "./pages/admin/AdminApp";
+>>>>>>> Stashed changes
 
 /* ================= AXIOS ================= */
 
@@ -92,8 +96,18 @@ const WelcomePage = ({ onNavigate }) => (
       <div className="mb-8 flex justify-center">
         <FitInLogo />
       </div>
+<<<<<<< Updated upstream
       <h1 className="text-4xl font-bold mb-3">FIT-IN</h1>
       <p className="text-gray-400 mb-10">Welcome to Fitness Intelligent App</p>
+=======
+
+      <h1 className="text-4xl font-bold mb-3">FIT-IN</h1>
+
+      <p className="text-gray-400 mb-10">
+        Welcome to Fitness Intelligent App
+      </p>
+
+>>>>>>> Stashed changes
       <div className="space-y-4">
         <button
           onClick={() => onNavigate("login")}
@@ -101,6 +115,10 @@ const WelcomePage = ({ onNavigate }) => (
         >
           LOGIN
         </button>
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
         <button
           onClick={() => onNavigate("register")}
           className="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-lg font-bold transition"
@@ -135,12 +153,20 @@ const LoginPage = ({ onNavigate }) => {
       localStorage.setItem("fitinToken", data.token);
       localStorage.setItem("fitinUser", JSON.stringify(data.user));
 
+<<<<<<< Updated upstream
       // Cek role → arahkan ke halaman yang sesuai
+=======
+      // Redirect sesuai role
+>>>>>>> Stashed changes
       if (data.user.role === "admin") {
         onNavigate("admin");
       } else {
         onNavigate("dashboard");
       }
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
     } catch (err) {
       if (err.response) {
         setError(err.response.data.message || "Login gagal");
@@ -167,7 +193,11 @@ const LoginPage = ({ onNavigate }) => {
         <h1 className="text-3xl font-bold text-center mb-8">LOGIN</h1>
         <ErrorBox message={error} />
         <InputField
+<<<<<<< Updated upstream
           placeholder="Email"
+=======
+          placeholder="Username atau Email"
+>>>>>>> Stashed changes
           value={form.username}
           onChange={(e) => setForm({ ...form, username: e.target.value })}
         />
@@ -213,7 +243,13 @@ const RegisterPage = ({ onNavigate }) => {
         password: form.password,
         password_confirmation: form.confirm,
       });
+<<<<<<< Updated upstream
       alert("Register berhasil! Silakan login.");
+=======
+
+      alert("Register berhasil! Silakan login.");
+
+>>>>>>> Stashed changes
       onNavigate("login");
     } catch (err) {
       if (err.response) {
@@ -277,9 +313,16 @@ const RegisterPage = ({ onNavigate }) => {
 /* ================= APP ROOT ================= */
 
 export default function FitInApp() {
+<<<<<<< Updated upstream
   const [page, setPage] = useState("welcome");
 
   // Cek localStorage saat pertama buka — kalau sudah login, langsung masuk
+=======
+
+  const [page, setPage] = useState("welcome");
+
+  // Auto login jika localStorage masih ada
+>>>>>>> Stashed changes
   useEffect(() => {
     const user = localStorage.getItem("fitinUser");
     if (user) {
@@ -291,6 +334,8 @@ export default function FitInApp() {
       }
     }
   }, []);
+
+  /* ================= LOGOUT ================= */
 
   const handleLogout = async () => {
     try {
@@ -308,6 +353,7 @@ export default function FitInApp() {
   return (
     <div className="min-h-screen">
 
+<<<<<<< Updated upstream
       {/* ── HALAMAN USER BIASA ── */}
       {page === "welcome"   && <WelcomePage onNavigate={setPage} />}
       {page === "login"     && <LoginPage onNavigate={setPage} />}
@@ -318,6 +364,41 @@ export default function FitInApp() {
 
       {/* ── HALAMAN ADMIN ── */}
       {/* Hanya masuk ke sini kalau role === "admin" saat login */}
+=======
+      {/* USER BIASA */}
+      {page === "welcome" && (
+        <WelcomePage onNavigate={setPage} />
+      )}
+
+      {page === "login" && (
+        <LoginPage onNavigate={setPage} />
+      )}
+
+      {page === "register" && (
+        <RegisterPage onNavigate={setPage} />
+      )}
+
+      {page === "dashboard" && (
+        <Dashboard
+          onLogout={handleLogout}
+          onNavigate={setPage}
+        />
+      )}
+
+      {page === "payment" && (
+        <Payment
+          onBack={() => setPage("dashboard")}
+        />
+      )}
+
+      {page === "data-diri" && (
+        <DataDiriPage
+          onBack={() => setPage("dashboard")}
+        />
+      )}
+
+      {/* ADMIN */}
+>>>>>>> Stashed changes
       {page === "admin" && (
         <AdminApp onLogout={handleLogout} />
       )}

@@ -21,13 +21,15 @@ export default function AdminDashboard({ onLogout }) {
       .then((res) => res.json())
       .then((data) => {
         setDashboard(data);
-      });
+      })
+      .catch((err) => console.error(err));
 
     fetch("http://127.0.0.1:8000/api/admin/users", { headers })
       .then((res) => res.json())
       .then((data) => {
         setUsers(data);
-      });
+      })
+      .catch((err) => console.error(err));
 
   }, []);
 

@@ -212,6 +212,7 @@ const LoginPage = ({ onNavigate }) => {
         return;
       }
 
+      // Simpan token & user ke localStorage
       localStorage.setItem("fitinToken", data.token);
       localStorage.setItem("fitinUser", JSON.stringify(data.user));
 

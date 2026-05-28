@@ -31,19 +31,24 @@ export default function Dashboard({ onLogout, onNavigate }) {
   // ── Auto-migrate data lama (sebelum fitur isolasi per-user) ──
   if (userId !== "guest") {
     const oldStats = localStorage.getItem("fitinStats");
-    const newStats = localStorage.getItem(`fitinStats_${userId}`);
-    if (oldStats && !newStats) {
-      localStorage.setItem(`fitinStats_${userId}`, oldStats);
+    if (oldStats) {
+      const newStats = localStorage.getItem(`fitinStats_${userId}`);
+      if (!newStats) localStorage.setItem(`fitinStats_${userId}`, oldStats);
+      localStorage.removeItem("fitinStats");
     }
+
     const oldDate = localStorage.getItem("fitinLastWorkoutDate");
-    const newDate = localStorage.getItem(`fitinLastWorkoutDate_${userId}`);
-    if (oldDate && !newDate) {
-      localStorage.setItem(`fitinLastWorkoutDate_${userId}`, oldDate);
+    if (oldDate) {
+      const newDate = localStorage.getItem(`fitinLastWorkoutDate_${userId}`);
+      if (!newDate) localStorage.setItem(`fitinLastWorkoutDate_${userId}`, oldDate);
+      localStorage.removeItem("fitinLastWorkoutDate");
     }
+
     const oldHistory = localStorage.getItem("fitinDailyHistory");
-    const newHistory = localStorage.getItem(`fitinDailyHistory_${userId}`);
-    if (oldHistory && !newHistory) {
-      localStorage.setItem(`fitinDailyHistory_${userId}`, oldHistory);
+    if (oldHistory) {
+      const newHistory = localStorage.getItem(`fitinDailyHistory_${userId}`);
+      if (!newHistory) localStorage.setItem(`fitinDailyHistory_${userId}`, oldHistory);
+      localStorage.removeItem("fitinDailyHistory");
     }
   }
 

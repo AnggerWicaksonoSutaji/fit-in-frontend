@@ -53,7 +53,7 @@ const InfoRow = ({ label, value, icon }) => (
   </div>
 );
 
-const ProfileContent = ({ onLogout }) => {
+const ProfileContent = ({ onLogout, onNavigate }) => {
   // Ambil data pengguna dari localStorage
   const user = JSON.parse(localStorage.getItem("fitinUser") || "{}");
 
@@ -114,16 +114,16 @@ const ProfileContent = ({ onLogout }) => {
             user?.created_at
               // Format tanggal registrasi jika tersedia
               ? new Date(user.created_at).toLocaleDateString("id-ID", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              })
               // Gunakan tanggal hari ini jika tidak ada data registrasi
               : new Date().toLocaleDateString("id-ID", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              })
           }
           icon="📅"
         />
@@ -146,7 +146,7 @@ const ProfileContent = ({ onLogout }) => {
           </p>
           <button
             className="w-full py-3 rounded-xl font-bold text-white text-sm transition-all hover:brightness-110"
-            style={{ background: "linear-gradient(135deg,#e03030,#a00020)" }}
+            style={{ background: "linear-gradient(135deg,#e03030,#a00020)" }} onClick={() => onNavigate("payment")}
           >
             Upgrade Sekarang
           </button>

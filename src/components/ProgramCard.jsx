@@ -21,7 +21,7 @@
  * ─────────────────────────────────────────────────
  */
 
-const ProgramCard = ({ program, hideButton, onChangeProgram }) => (
+const ProgramCard = ({ program, hideButton, onChangeProgram, onNavigate, onStart }) => (
   <div
     className="rounded-2xl p-5 transition-all duration-300 hover:translate-y-[-2px] hover:shadow-2xl"
     style={{
@@ -68,6 +68,10 @@ const ProgramCard = ({ program, hideButton, onChangeProgram }) => (
     {/* Tombol aksi */}
     {!hideButton && (
       <button
+        onClick={() => {
+          if (onStart) onStart();
+          else if (onNavigate) onNavigate("payment");
+        }}
         className="mt-4 w-full py-2.5 rounded-xl text-sm font-bold tracking-wide transition-all hover:brightness-110 hover:scale-[1.02]"
         style={{
           background: `linear-gradient(135deg, ${program.color}, ${program.color}88)`,

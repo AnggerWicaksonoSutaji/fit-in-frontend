@@ -235,7 +235,7 @@ export default function Dashboard({ onLogout, onNavigate }) {
         liveCalories={((MET * 3.5 * beratBadan) / 200) * (workoutSeconds / 60)}
         stats={stats}
       />;
-      case "workout": return <WorkoutContent />;
+      case "workout": return <WorkoutContent onNavigate={onNavigate} setActive={setActive} />;
       case "video": return <VideoContent initialCategory={selectedVideoCategory} onClearCategory={() => setSelectedVideoCategory(null)} />;
       case "nutrition": return <NutritionContent onNavigate={onNavigate} />;
       case "bmi": return <BMIContent />;
@@ -323,7 +323,7 @@ export default function Dashboard({ onLogout, onNavigate }) {
               </span>
             )}
             <button className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold cursor-pointer transition-transform hover:scale-110"
-              style={{ background: "linear-gradient(135deg,#e03030,#1a6ebd)", border: "none" }} 
+              style={{ background: "linear-gradient(135deg,#e03030,#1a6ebd)", border: "none" }}
               onClick={() => setActive("profile")}>
               {user?.name?.[0]?.toUpperCase() || "A"}
             </button>

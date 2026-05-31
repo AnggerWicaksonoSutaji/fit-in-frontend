@@ -153,6 +153,15 @@ const ProfileContent = ({ onLogout, onNavigate }) => {
         </div>
       )}
 
+      {/* ── Tombol Ubah Data Diri ── */}
+      <button
+        onClick={() => onNavigate("data-diri")}
+        className="w-full py-3 rounded-xl font-bold text-white text-sm transition-all hover:brightness-110 mb-3"
+        style={{ background: "linear-gradient(135deg, #1a6ebd, #0a3a7a)", border: "1px solid rgba(26,110,189,0.5)" }}
+      >
+        📝 Ubah Data Diri
+      </button>
+
       {/* ── Tombol Logout ── */}
       <button
         onClick={onLogout}

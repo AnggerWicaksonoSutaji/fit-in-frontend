@@ -499,7 +499,7 @@ const RegisterPage = ({ onNavigate }) => {
 /* ════════════════════════════════════════
    APP ROOT
 ════════════════════════════════════════ */
-export default function App() {
+export default function FitInApp() {
   const [page, setPage] = useState(() => {
     const savedPage = sessionStorage.getItem("fitinCurrentPage");
     if (savedPage && ["dashboard", "payment", "data-diri", "admin"].includes(savedPage)) {
@@ -553,7 +553,7 @@ export default function App() {
       {page === "dashboard" && <Dashboard onLogout={handleLogout} onNavigate={setPage} />}
       {page === "payment" && <Payment onBack={() => setPage("dashboard")} onSuccess={(nextPage) => setPage(nextPage || "dashboard")} />}
       {page === "data-diri" && <DataDiriPage onBack={() => setPage("dashboard")} onSuccess={() => setPage("dashboard")} />}
-      {page === "admin" && <AdminDashboard onLogout={handleLogout} />}
+      {page === "admin" && <AdminApp onLogout={handleLogout} />}
     </div>
   );
 }

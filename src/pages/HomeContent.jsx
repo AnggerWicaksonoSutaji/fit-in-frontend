@@ -35,9 +35,16 @@ const HomeContent = ({ user, onNavigate, setActive, setSelectedVideoCategory, st
 
   // Ambil data profile untuk mengetahui program (goal) yang aktif
   const rawProfile = localStorage.getItem("fitinProfile");
+<<<<<<< Updated upstream
   const profile = rawProfile ? JSON.parse(rawProfile) : { goal: "maintenance" };
   const activeProgram = workoutPrograms.find(p => p.title.toLowerCase() === profile.goal.toLowerCase()) || workoutPrograms.find(p => p.title.toLowerCase() === "maintenance");
 
+=======
+  const profile = rawProfile ? JSON.parse(rawProfile) : {};
+  const userGoal = (typeof profile?.goal === 'string' && profile.goal) ? profile.goal.toLowerCase() : "maintenance";
+  const activeProgram = workoutPrograms.find(p => p.title.toLowerCase() === userGoal) || workoutPrograms.find(p => p.title.toLowerCase() === "maintenance");
+  
+>>>>>>> Stashed changes
   // Dapatkan nama hari ini dalam bahasa Indonesia
   const today = new Date();
   const currentDay = today.toLocaleDateString('id-ID', { weekday: 'long' });
@@ -48,7 +55,7 @@ const HomeContent = ({ user, onNavigate, setActive, setSelectedVideoCategory, st
 
   const rawCustom = localStorage.getItem("fitinCustomSchedules");
   const customSchedules = rawCustom ? JSON.parse(rawCustom) : {};
-  const defaultRoutine = (schedules[profile.goal] || schedules.maintenance)[dayIndex];
+  const defaultRoutine = (schedules[userGoal] || schedules.maintenance)[dayIndex];
   const todayRoutine = customSchedules[dateStr] || defaultRoutine;
   const isCustomRoutine = !!customSchedules[dateStr];
   const todayColor = isCustomRoutine ? "#f59e0b" : dayColors[dayIndex];
@@ -79,7 +86,7 @@ const HomeContent = ({ user, onNavigate, setActive, setSelectedVideoCategory, st
     const virtualCategory = {
       id: "today-workout-virtual",
       title: todayRoutine.focus,
-      level: isCustomRoutine ? "Custom" : profile.goal.toUpperCase(),
+      level: isCustomRoutine ? "Custom" : userGoal.toUpperCase(),
       locked: false,
       thumb: "📅",
       desc: `Sesi latihan hari ini: ${todayRoutine.exercises.join(", ")}.`,
@@ -130,9 +137,15 @@ const HomeContent = ({ user, onNavigate, setActive, setSelectedVideoCategory, st
       {/* ── Kartu Statistik ── */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
         {[
+<<<<<<< Updated upstream
           { label: "Workout Hari Ini", value: String(stats.todaySessions || 0), unit: "sesi", color: "#e03030", icon: "🔥" },
           { label: "Kalori Terbakar Hari Ini", value: String(stats.todayCalories || 0), unit: "kcal", color: "#1a6ebd", icon: "⚡" },
           { label: "Streak", value: String(stats.streak), unit: "hari", color: "#8b1a8b", icon: "📅" },
+=======
+          { label: "Workout", value: String(stats.todaySessions ?? 0), unit: "sesi", color: "#e03030", icon: "🔥" },
+          { label: "Kalori", value: String(stats.todayCalories ?? 0), unit: "kcal", color: "#1a6ebd", icon: "⚡" },
+          { label: "Streak", value: String(stats.streak ?? 0), unit: "hari", color: "#8b1a8b", icon: "📅" },
+>>>>>>> Stashed changes
         ].map((stat) => (
           <div
             key={stat.label}

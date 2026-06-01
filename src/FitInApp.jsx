@@ -395,14 +395,15 @@ onNavigate("login");
   );
 };
 
-/* ================= APP ROOT ================= */
-
-export default function App() {
-
-  const [page, setPage] = useState("welcome");
-
-  useEffect(() => {
-
+/* ════════════════════════════════════════
+   APP ROOT
+════════════════════════════════════════ */
+export default function FitInApp() {
+  const [page, setPage] = useState(() => {
+    const savedPage = sessionStorage.getItem("fitinCurrentPage");
+    if (savedPage && ["dashboard", "payment", "data-diri", "admin"].includes(savedPage)) {
+      return savedPage;
+    }
     const user = localStorage.getItem("fitinUser");
     if (user) {
 
@@ -436,29 +437,15 @@ export default function App() {
     console.error(err);
   }
 
-  localStorage.removeItem("fitinToken");
-  localStorage.removeItem("fitinUser");
-  localStorage.removeItem("fitinPremium");
-  localStorage.removeItem("fitinPlan");
-  localStorage.removeItem("fitinProfile");
-  localStorage.removeItem("fitinNutrition");
-
-  sessionStorage.removeItem("fitinCurrentPage");
-  sessionStorage.removeItem("fitinDashboardTab");
-
-  localStorage.clear();
-  sessionStorage.clear();
-
-  setPage("welcome");
-};
-return (
-  <div className="min-h-screen">
-    ...
-    {page === "admin" && (
-      <AdminApp
-        onLogout={handleLogout}
-      />
-    )}
-  </div>
-);
-};
+  return (
+    <div className="min-h-screen">
+      {page === "welcome" && <WelcomePage onNavigate={setPage} />}
+      {page === "login" && <LoginPage onNavigate={setPage} />}
+      {page === "register" && <RegisterPage onNavigate={setPage} />}
+      {page === "dashboard" && <Dashboard onLogout={handleLogout} onNavigate={setPage} />}
+      {page === "payment" && <Payment onBack={() => setPage("dashboard")} onSuccess={(nextPage) => setPage(nextPage || "dashboard")} />}
+      {page === "data-diri" && <DataDiriPage onBack={() => setPage("dashboard")} onSuccess={() => setPage("dashboard")} />}
+      {page === "admin" && <AdminApp onLogout={handleLogout} />}
+    </div>
+  );
+}

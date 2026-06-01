@@ -104,6 +104,12 @@ export default function Payment({ onBack, onSuccess }) {
       //   onError: function(result){ ... }
       // });
       
+      if (!window.snap) {
+        alert("Gagal memproses pembayaran: Script Midtrans tidak ditemukan. Pastikan Anda terhubung ke internet dan tidak menggunakan Ad-Blocker yang memblokir script pembayaran.");
+        setLoading(false);
+        return;
+      }
+
       window.snap.pay(checkoutData.snap_token, {
         onSuccess: async function() {
           // Logika ketika pembayaran sukses

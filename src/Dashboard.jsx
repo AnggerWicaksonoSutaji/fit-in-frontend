@@ -129,7 +129,7 @@ export default function Dashboard({ onLogout, onNavigate }) {
   const handlePointerDown = (e) => {
     // Jangan drag jika yang diklik adalah tombol
     if (e.target.closest("button")) return;
-    
+
     e.preventDefault();
     setIsDragging(true);
     dragRef.current = {
@@ -224,12 +224,12 @@ export default function Dashboard({ onLogout, onNavigate }) {
 
   const renderContent = () => {
     switch (active) {
-      case "home": return <HomeContent 
-        user={user} 
-        onNavigate={onNavigate} 
-        setActive={setActive} 
-        setSelectedVideoCategory={setSelectedVideoCategory} 
-        startGlobalWorkout={startGlobalWorkout} 
+      case "home": return <HomeContent
+        user={user}
+        onNavigate={onNavigate}
+        setActive={setActive}
+        setSelectedVideoCategory={setSelectedVideoCategory}
+        startGlobalWorkout={startGlobalWorkout}
         isWorkoutActive={isWorkoutActive}
         workoutSeconds={workoutSeconds}
         liveCalories={((MET * 3.5 * beratBadan) / 200) * (workoutSeconds / 60)}
@@ -241,13 +241,13 @@ export default function Dashboard({ onLogout, onNavigate }) {
       case "bmi": return <BMIContent />;
       case "progress": return <ProgressContent stats={stats} user={user} />;
       case "schedule": return <ScheduleContent />;
-      case "profile": return <ProfileContent onLogout={onLogout} />;
-      default: return <HomeContent 
-        user={user} 
-        onNavigate={onNavigate} 
-        setActive={setActive} 
-        setSelectedVideoCategory={setSelectedVideoCategory} 
-        startGlobalWorkout={startGlobalWorkout} 
+      case "profile": return <ProfileContent onLogout={onLogout} onNavigate={onNavigate} />;
+      default: return <HomeContent
+        user={user}
+        onNavigate={onNavigate}
+        setActive={setActive}
+        setSelectedVideoCategory={setSelectedVideoCategory}
+        startGlobalWorkout={startGlobalWorkout}
         isWorkoutActive={isWorkoutActive}
         workoutSeconds={workoutSeconds}
         liveCalories={((MET * 3.5 * beratBadan) / 200) * (workoutSeconds / 60)}
@@ -322,10 +322,11 @@ export default function Dashboard({ onLogout, onNavigate }) {
                 ⭐ Premium
               </span>
             )}
-            <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold"
-              style={{ background: "linear-gradient(135deg,#e03030,#1a6ebd)" }}>
+            <button className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold cursor-pointer transition-transform hover:scale-110"
+              style={{ background: "linear-gradient(135deg,#e03030,#1a6ebd)", border: "none" }} 
+              onClick={() => setActive("profile")}>
               {user?.name?.[0]?.toUpperCase() || "A"}
-            </div>
+            </button>
           </div>
         </div>
         <div className="p-6">{renderContent()}</div>
@@ -333,9 +334,9 @@ export default function Dashboard({ onLogout, onNavigate }) {
 
       {/* ── Floating Timer Widget ── */}
       {isWorkoutActive && (
-        <div 
-          className="fixed bottom-8 right-8 z-40 bg-black/80 backdrop-blur-md border border-red-500/30 p-4 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.5)] flex items-center gap-6 select-none" 
-          style={{ 
+        <div
+          className="fixed bottom-8 right-8 z-40 bg-black/80 backdrop-blur-md border border-red-500/30 p-4 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.5)] flex items-center gap-6 select-none"
+          style={{
             transform: `translate(${timerPos.x}px, ${timerPos.y}px)`,
             cursor: isDragging ? "grabbing" : "grab",
             touchAction: "none" // Mencegah scroll di perangkat sentuh saat dragging
@@ -360,12 +361,12 @@ export default function Dashboard({ onLogout, onNavigate }) {
       {showCelebrationModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-md transition-opacity"></div>
-          
+
           <div className="relative bg-[#1a1a1a] border border-white/10 p-8 rounded-[2rem] max-w-md w-full text-center shadow-[0_0_80px_rgba(239,68,68,0.3)] transform transition-all duration-500 scale-100 opacity-100 animate-[bounce_1s_ease-in-out]">
             <div className="text-8xl mb-6 animate-bounce">🎉</div>
             <h2 className="text-3xl font-black text-white mb-2">Kamu Luar Biasa!</h2>
             <p className="text-gray-400 text-sm mb-8">Sesi workout telah selesai. Ini adalah pencapaianmu hari ini:</p>
-            
+
             <div className="flex justify-center gap-4 mb-8">
               <div className="bg-white/5 p-4 rounded-2xl border border-white/5 flex-1">
                 <p className="text-gray-500 text-xs font-bold uppercase mb-2 tracking-widest">Waktu</p>

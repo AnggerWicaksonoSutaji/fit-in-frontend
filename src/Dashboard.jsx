@@ -25,6 +25,32 @@ export default function Dashboard({ onLogout, onNavigate }) {
   const [selectedVideoCategory, setSelectedVideoCategory] = useState(null);
 
   const user = JSON.parse(localStorage.getItem("fitinUser") || '{"name":"Athlete"}');
+  // Pastikan userId selalu valid — gunakan id, fallback ke email, lalu ke name
+  const userId = user?.id || user?.email || user?.name || "guest";
+
+  // ── Auto-migrate data lama (sebelum fitur isolasi per-user) ──
+  if (userId !== "guest") {
+    const oldStats = localStorage.getItem("fitinStats");
+    if (oldStats) {
+      const newStats = localStorage.getItem(`fitinStats_${userId}`);
+      if (!newStats) localStorage.setItem(`fitinStats_${userId}`, oldStats);
+      localStorage.removeItem("fitinStats");
+    }
+
+    const oldDate = localStorage.getItem("fitinLastWorkoutDate");
+    if (oldDate) {
+      const newDate = localStorage.getItem(`fitinLastWorkoutDate_${userId}`);
+      if (!newDate) localStorage.setItem(`fitinLastWorkoutDate_${userId}`, oldDate);
+      localStorage.removeItem("fitinLastWorkoutDate");
+    }
+
+    const oldHistory = localStorage.getItem("fitinDailyHistory");
+    if (oldHistory) {
+      const newHistory = localStorage.getItem(`fitinDailyHistory_${userId}`);
+      if (!newHistory) localStorage.setItem(`fitinDailyHistory_${userId}`, oldHistory);
+      localStorage.removeItem("fitinDailyHistory");
+    }
+  }
 
   const handleUpgrade = () => {
     setShowPopup(false);
@@ -39,12 +65,12 @@ export default function Dashboard({ onLogout, onNavigate }) {
   const timerRef = useRef(null);
 
   const [stats, setStats] = useState(() => {
-    const raw = localStorage.getItem("fitinStats");
+    const raw = localStorage.getItem(`fitinStats_${userId}`);
     const parsed = raw ? JSON.parse(raw) : { workouts: 0, calories: 0, streak: 0 };
 
     // ── Reset harian: cek apakah lastWorkoutDate adalah hari ini ──
     const todayStr = new Date().toISOString().slice(0, 10);
-    const lastDate = localStorage.getItem("fitinLastWorkoutDate");
+    const lastDate = localStorage.getItem(`fitinLastWorkoutDate_${userId}`);
 
     let streak = parsed.streak;
     // Jika terakhir workout BUKAN kemarin dan BUKAN hari ini → streak reset
@@ -55,7 +81,7 @@ export default function Dashboard({ onLogout, onNavigate }) {
       if (lastDate !== todayStr && lastDate !== yesterdayStr) {
         streak = 0;
         const updated = { ...parsed, streak: 0, todaySessions: 0, todayCalories: 0 };
-        localStorage.setItem("fitinStats", JSON.stringify(updated));
+        localStorage.setItem(`fitinStats_${userId}`, JSON.stringify(updated));
         return updated;
       }
     }
@@ -63,7 +89,7 @@ export default function Dashboard({ onLogout, onNavigate }) {
     // Reset todaySessions & todayCalories jika hari sudah berganti
     if (lastDate && lastDate !== todayStr) {
       const updated = { ...parsed, streak, todaySessions: 0, todayCalories: 0 };
-      localStorage.setItem("fitinStats", JSON.stringify(updated));
+      localStorage.setItem(`fitinStats_${userId}`, JSON.stringify(updated));
       return updated;
     }
 
@@ -133,15 +159,15 @@ export default function Dashboard({ onLogout, onNavigate }) {
 
     // ── Logika Streak: tambah 1x per hari ──
     const todayStr = new Date().toISOString().slice(0, 10);
-    const lastDate = localStorage.getItem("fitinLastWorkoutDate");
+    const lastDate = localStorage.getItem(`fitinLastWorkoutDate_${userId}`);
 
     if (lastDate !== todayStr) {
       // Ini sesi pertama hari ini → update streak
-      localStorage.setItem("fitinLastWorkoutDate", todayStr);
+      localStorage.setItem(`fitinLastWorkoutDate_${userId}`, todayStr);
       setStats((prev) => {
         const newStreak = prev.streak + 1;
         const updated = { ...prev, streak: newStreak };
-        localStorage.setItem("fitinStats", JSON.stringify(updated));
+        localStorage.setItem(`fitinStats_${userId}`, JSON.stringify(updated));
         setNewStreakCount(newStreak);
         setShowStreakPopup(true);
         // Auto-hide popup setelah 3 detik
@@ -170,10 +196,10 @@ export default function Dashboard({ onLogout, onNavigate }) {
         todaySessions: (prev.todaySessions || 0) + 1,
         todayCalories: Math.round((prev.todayCalories || 0) + calories),
       };
-      localStorage.setItem("fitinStats", JSON.stringify(newStats));
+      localStorage.setItem(`fitinStats_${userId}`, JSON.stringify(newStats));
 
       // ── Simpan history harian untuk grafik bulanan ──
-      const rawHistory = localStorage.getItem("fitinDailyHistory");
+      const rawHistory = localStorage.getItem(`fitinDailyHistory_${userId}`);
       const history = rawHistory ? JSON.parse(rawHistory) : {};
       history[todayStr] = {
         sessions: newStats.todaySessions,
@@ -184,7 +210,7 @@ export default function Dashboard({ onLogout, onNavigate }) {
       const sortedKeys = Object.keys(history).sort().slice(-90);
       const trimmed = {};
       sortedKeys.forEach(k => { trimmed[k] = history[k]; });
-      localStorage.setItem("fitinDailyHistory", JSON.stringify(trimmed));
+      localStorage.setItem(`fitinDailyHistory_${userId}`, JSON.stringify(trimmed));
 
       return newStats;
     });
@@ -213,7 +239,7 @@ export default function Dashboard({ onLogout, onNavigate }) {
       case "video": return <VideoContent initialCategory={selectedVideoCategory} onClearCategory={() => setSelectedVideoCategory(null)} />;
       case "nutrition": return <NutritionContent onNavigate={onNavigate} />;
       case "bmi": return <BMIContent />;
-      case "progress": return <ProgressContent stats={stats} />;
+      case "progress": return <ProgressContent stats={stats} user={user} />;
       case "schedule": return <ScheduleContent />;
       case "profile": return <ProfileContent onLogout={onLogout} />;
       default: return <HomeContent 

@@ -35,16 +35,11 @@ const HomeContent = ({ user, onNavigate, setActive, setSelectedVideoCategory, st
 
   // Ambil data profile untuk mengetahui program (goal) yang aktif
   const rawProfile = localStorage.getItem("fitinProfile");
-<<<<<<< Updated upstream
-  const profile = rawProfile ? JSON.parse(rawProfile) : { goal: "maintenance" };
-  const activeProgram = workoutPrograms.find(p => p.title.toLowerCase() === profile.goal.toLowerCase()) || workoutPrograms.find(p => p.title.toLowerCase() === "maintenance");
-
-=======
-  const profile = rawProfile ? JSON.parse(rawProfile) : {};
+  let profile = {};
+  try { if (rawProfile && rawProfile !== "undefined") profile = JSON.parse(rawProfile); } catch (e) {}
   const userGoal = (typeof profile?.goal === 'string' && profile.goal) ? profile.goal.toLowerCase() : "maintenance";
   const activeProgram = workoutPrograms.find(p => p.title.toLowerCase() === userGoal) || workoutPrograms.find(p => p.title.toLowerCase() === "maintenance");
-  
->>>>>>> Stashed changes
+
   // Dapatkan nama hari ini dalam bahasa Indonesia
   const today = new Date();
   const currentDay = today.toLocaleDateString('id-ID', { weekday: 'long' });
@@ -54,15 +49,16 @@ const HomeContent = ({ user, onNavigate, setActive, setSelectedVideoCategory, st
   const dayIndex = (today.getDay() + 6) % 7; // Convert 0(Sun)-6(Sat) to 0(Mon)-6(Sun)
 
   const rawCustom = localStorage.getItem("fitinCustomSchedules");
-  const customSchedules = rawCustom ? JSON.parse(rawCustom) : {};
+  let customSchedules = {};
+  try { if (rawCustom && rawCustom !== "undefined") customSchedules = JSON.parse(rawCustom); } catch (e) {}
   const defaultRoutine = (schedules[userGoal] || schedules.maintenance)[dayIndex];
-  const todayRoutine = customSchedules[dateStr] || defaultRoutine;
+  const todayRoutine = customSchedules[dateStr] || defaultRoutine || { focus: "Rest Day", exercises: [] };
   const isCustomRoutine = !!customSchedules[dateStr];
   const todayColor = isCustomRoutine ? "#f59e0b" : dayColors[dayIndex];
 
   // Fungsi untuk memulai workout harian dan melihat videonya
   const handleStartWorkout = () => {
-    if (todayRoutine.focus === "Rest Day" || todayRoutine.exercises.length === 0) {
+    if (todayRoutine?.focus === "Rest Day" || !todayRoutine?.exercises || todayRoutine.exercises.length === 0) {
       setRestDayPopup(true);
       return;
     }
@@ -137,15 +133,9 @@ const HomeContent = ({ user, onNavigate, setActive, setSelectedVideoCategory, st
       {/* ── Kartu Statistik ── */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
         {[
-<<<<<<< Updated upstream
-          { label: "Workout Hari Ini", value: String(stats.todaySessions || 0), unit: "sesi", color: "#e03030", icon: "🔥" },
-          { label: "Kalori Terbakar Hari Ini", value: String(stats.todayCalories || 0), unit: "kcal", color: "#1a6ebd", icon: "⚡" },
-          { label: "Streak", value: String(stats.streak), unit: "hari", color: "#8b1a8b", icon: "📅" },
-=======
-          { label: "Workout", value: String(stats.todaySessions ?? 0), unit: "sesi", color: "#e03030", icon: "🔥" },
-          { label: "Kalori", value: String(stats.todayCalories ?? 0), unit: "kcal", color: "#1a6ebd", icon: "⚡" },
-          { label: "Streak", value: String(stats.streak ?? 0), unit: "hari", color: "#8b1a8b", icon: "📅" },
->>>>>>> Stashed changes
+          { label: "Workout", value: String(stats?.todaySessions ?? 0), unit: "sesi", color: "#e03030", icon: "🔥" },
+          { label: "Kalori", value: String(stats?.todayCalories ?? 0), unit: "kcal", color: "#1a6ebd", icon: "⚡" },
+          { label: "Streak", value: String(stats?.streak ?? 0), unit: "hari", color: "#8b1a8b", icon: "📅" },
         ].map((stat) => (
           <div
             key={stat.label}
@@ -183,13 +173,13 @@ const HomeContent = ({ user, onNavigate, setActive, setSelectedVideoCategory, st
               </span>
             )}
             <p className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">
-              {currentDay} • {todayRoutine.focus === "Rest Day" || todayRoutine.exercises.length === 0 ? "Rest Day" : "Workout Day"}
+              {currentDay} • {todayRoutine?.focus === "Rest Day" || !todayRoutine?.exercises || todayRoutine.exercises.length === 0 ? "Rest Day" : "Workout Day"}
             </p>
             <h4 className="text-white text-xl font-black mb-4" style={{ color: todayColor }}>
-              {todayRoutine.focus}
+              {todayRoutine?.focus || "Rest Day"}
             </h4>
 
-            {todayRoutine.exercises.length > 0 ? (
+            {todayRoutine?.exercises?.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {todayRoutine.exercises.map((e, idx) => (
                   <span
@@ -256,10 +246,9 @@ const HomeContent = ({ user, onNavigate, setActive, setSelectedVideoCategory, st
       <h3 className="text-white font-bold text-lg mb-4">🎬 Workout Video</h3>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {workoutCategories.map((v) => (
-          /* Override properti locked: jika premium, semua konten terbuka */
           <VideoCard
             key={v.id}
-            video={{ ...v, locked: isPremium ? false : v.locked }}
+            video={v}
             onClick={() => {
               if (setSelectedVideoCategory && setActive) {
                 setSelectedVideoCategory(v);

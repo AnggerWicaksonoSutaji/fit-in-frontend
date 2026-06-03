@@ -21,7 +21,7 @@ import VideoCard from "../components/VideoCard";
 import CategoryDetailPage from "../components/CategoryDetailPage";
 import { workoutCategories } from "../data/workoutCategories";
 
-const VideoContent = ({ initialCategory, onClearCategory }) => {
+const VideoContent = ({ initialCategory, onClearCategory, triggerStreak }) => {
   // Cek status premium dari localStorage
   const isPremium = localStorage.getItem("fitinPremium") === "true";
 
@@ -32,6 +32,13 @@ const VideoContent = ({ initialCategory, onClearCategory }) => {
   useEffect(() => {
     setSelectedCategory(initialCategory);
   }, [initialCategory]);
+
+  // Trigger streak saat memilih kategori (bagian otot) untuk user non-premium
+  useEffect(() => {
+    if (selectedCategory && !isPremium && triggerStreak) {
+      triggerStreak();
+    }
+  }, [selectedCategory, isPremium, triggerStreak]);
 
   // Jika ada kategori yang dipilih, tampilkan halaman detail
   if (selectedCategory) {
@@ -62,35 +69,11 @@ const VideoContent = ({ initialCategory, onClearCategory }) => {
         {workoutCategories.map((v) => (
           <VideoCard
             key={v.id}
-            // Override locked: premium user bisa akses semua
-            video={{ ...v, locked: isPremium ? false : v.locked }}
+            video={v}
             onClick={setSelectedCategory} // Set kategori yang dipilih saat diklik
           />
         ))}
       </div>
-
-      {/* ── Banner Upgrade Premium (hanya untuk pengguna gratis) ── */}
-      {!isPremium && (
-        <div
-          className="mt-6 p-5 rounded-2xl text-center"
-          style={{
-            background: "linear-gradient(135deg, rgba(224,48,48,0.1), rgba(26,110,189,0.1))",
-            border: "1px solid rgba(255,255,255,0.08)",
-          }}
-        >
-          <div className="text-4xl mb-2">🔒</div>
-          <h3 className="text-white font-bold mb-1">Unlock Semua Video</h3>
-          <p className="text-gray-500 text-sm mb-4">
-            Upgrade ke Premium untuk akses semua video workout
-          </p>
-          <button
-            className="px-8 py-3 rounded-xl font-bold text-white text-sm transition-all hover:brightness-110"
-            style={{ background: "linear-gradient(135deg,#e03030,#a00020)" }}
-          >
-            ⭐ Upgrade Premium
-          </button>
-        </div>
-      )}
     </div>
   );
 };

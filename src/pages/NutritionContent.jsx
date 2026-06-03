@@ -20,7 +20,7 @@
  * ─────────────────────────────────────────────────
  */
 
-import PremiumUpgradeButton from "../components/PremiumUpgradeButton";
+import LockedPage from "../components/LockedPage";
 
 const NutritionContent = ({ onNavigate }) => {
   // Ambil status premium
@@ -169,28 +169,7 @@ const NutritionContent = ({ onNavigate }) => {
   }
 
   // ── Tampilan Default: Placeholder untuk Pengguna Non-Premium ──
-  return (
-    <div>
-      <h2 className="text-white text-2xl font-black mb-2">Nutrition</h2>
-      <p className="text-gray-500 text-sm mb-6">
-        Panduan nutrisi untuk mendukung program fitness kamu
-      </p>
-      <div
-        className="mt-5 p-5 rounded-2xl text-center"
-        style={{
-          background: "rgba(255,255,255,0.03)",
-          border: "1px solid rgba(255,255,255,0.08)",
-        }}
-      >
-        <div className="text-3xl mb-2">🔒</div>
-        <p className="text-gray-400 text-sm mb-3">
-          Meal plan harian dan kalkulasi kalori tersedia di Premium
-        </p>
-        {/* Tombol upgrade reusable */}
-        <PremiumUpgradeButton onNavigate={onNavigate} />
-      </div>
-    </div>
-  );
+  return <LockedPage title="Nutrition & Meal Plan" emoji="🍎" onNavigate={onNavigate} />;
 };
 
 export default NutritionContent;

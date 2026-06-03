@@ -70,7 +70,7 @@ export const workoutCategories = [
     id: 2,
     title: "Upper Body Strength",
     level: "Intermediate",
-    locked: true, // Premium only
+    locked: false, // Premium only
     thumb: "💪",
     desc: "Latihan kekuatan tubuh bagian atas dengan fokus pada dada, bahu, dan lengan.",
     exercises: [
@@ -113,7 +113,7 @@ export const workoutCategories = [
     id: 3,
     title: "HIIT Cardio Blast",
     level: "Advanced",
-    locked: true, // Premium only
+    locked: false, // Premium only
     thumb: "🔥",
     desc: "Latihan kardio intensitas tinggi untuk membakar kalori maksimal dalam waktu singkat.",
     exercises: [
@@ -156,7 +156,7 @@ export const workoutCategories = [
     id: 4,
     title: "Core & Abs Routine",
     level: "Intermediate",
-    locked: true, // Premium only
+    locked: false, // Premium only
     thumb: "⚡",
     desc: "Latihan khusus untuk memperkuat otot inti dan perut agar lebih stabil dan kencang.",
     exercises: [
@@ -199,7 +199,7 @@ export const workoutCategories = [
     id: 5,
     title: "Leg Day Crusher",
     level: "Advanced",
-    locked: true, // Premium only
+    locked: false, // Premium only
     thumb: "🦵",
     desc: "Latihan berat untuk kaki mencakup squat, lunges, dan variasi gerakan kaki lainnya.",
     exercises: [
@@ -242,7 +242,7 @@ export const workoutCategories = [
     id: 6,
     title: "Yoga & Stretching",
     level: "Beginner",
-    locked: true, // Premium only
+    locked: false, // Premium only
     thumb: "🧘",
     desc: "Sesi yoga dan peregangan untuk meningkatkan fleksibilitas dan relaksasi tubuh.",
     exercises: [

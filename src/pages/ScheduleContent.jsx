@@ -3,13 +3,13 @@ import LockedPage from "../components/LockedPage";
 
 import { dayColors, dayNames, schedules } from "../data/schedules";
 
-const ScheduleContent = () => {
+const ScheduleContent = ({ onNavigate }) => {
   const isPremium = localStorage.getItem("fitinPremium") === "true";
-  
+
   const [viewMode, setViewMode] = useState("calendar"); // 'weekly' or 'calendar'
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
-  
+
   // State untuk menyimpan rutinitas kustom harian pengguna
   const [customSchedules, setCustomSchedules] = useState({});
   const [isEditing, setIsEditing] = useState(false);
@@ -28,7 +28,7 @@ const ScheduleContent = () => {
     }
   }, []);
 
-  if (!isPremium) return <LockedPage title="Workout Schedule" emoji="📅" />;
+  if (!isPremium) return <LockedPage title="Workout Schedule" emoji="📅" onNavigate={onNavigate} />;
 
   const rawProfile = localStorage.getItem("fitinProfile");
   const profile = rawProfile ? JSON.parse(rawProfile) : { goal: "maintenance" };
@@ -43,7 +43,7 @@ const ScheduleContent = () => {
   const handleSaveCustom = () => {
     const dateStr = formatDate(selectedDate);
     const updated = { ...customSchedules };
-    
+
     // Jika dikosongkan, hapus custom routine pada hari itu (kembali ke default)
     if (!editFocus.trim() && !editExercises.trim()) {
       delete updated[dateStr];
@@ -53,7 +53,7 @@ const ScheduleContent = () => {
         exercises: editExercises.split(",").map(e => e.trim()).filter(e => e)
       };
     }
-    
+
     setCustomSchedules(updated);
     localStorage.setItem("fitinCustomSchedules", JSON.stringify(updated));
     setIsEditing(false);
@@ -91,17 +91,17 @@ const ScheduleContent = () => {
             Jadwal latihan untuk program {profile.goal}
           </p>
         </div>
-        
+
         {/* Toggle Tampilan */}
         <div className="flex bg-white/5 rounded-lg p-1 border border-white/10">
-          <button 
-            onClick={() => setViewMode("weekly")} 
+          <button
+            onClick={() => setViewMode("weekly")}
             className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${viewMode === "weekly" ? "bg-red-600 text-white" : "text-gray-400 hover:text-white"}`}
           >
             Mingguan
           </button>
-          <button 
-            onClick={() => setViewMode("calendar")} 
+          <button
+            onClick={() => setViewMode("calendar")}
             className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${viewMode === "calendar" ? "bg-red-600 text-white" : "text-gray-400 hover:text-white"}`}
           >
             Kalender
@@ -125,8 +125,8 @@ const ScheduleContent = () => {
                 }}
               >
                 {isToday && (
-                  <span 
-                    className="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-bold tracking-wider" 
+                  <span
+                    className="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-bold tracking-wider"
                     style={{ backgroundColor: dayColors[i], color: '#fff' }}
                   >
                     HARI INI
@@ -163,15 +163,15 @@ const ScheduleContent = () => {
                 <button onClick={() => setCurrentDate(new Date(year, month + 1, 1))} className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all text-white font-bold">{">"}</button>
               </div>
             </div>
-            
+
             <div className="grid grid-cols-7 gap-1 md:gap-2 mb-2">
               {/* Header Hari */}
-              {dayNames.map(d => <div key={d} className="text-center text-xs font-bold text-gray-500 py-2">{d.substring(0,3)}</div>)}
-              
+              {dayNames.map(d => <div key={d} className="text-center text-xs font-bold text-gray-500 py-2">{d.substring(0, 3)}</div>)}
+
               {/* Grid Tanggal */}
               {days.map((d, i) => {
                 if (!d) return <div key={`empty-${i}`} className="p-2 md:p-3" />;
-                
+
                 const isToday = d.toDateString() === new Date().toDateString();
                 const isSelected = selectedDate && d.toDateString() === selectedDate.toDateString();
                 const dayIndex = (d.getDay() + 6) % 7;
@@ -180,8 +180,8 @@ const ScheduleContent = () => {
                 const color = hasCustom ? "#f59e0b" : dayColors[dayIndex];
 
                 return (
-                  <div 
-                    key={i} 
+                  <div
+                    key={i}
                     onClick={() => { setSelectedDate(d); setIsEditing(false); }}
                     className={`relative p-2 md:p-4 rounded-xl cursor-pointer transition-all border flex flex-col items-center justify-center ${isSelected ? 'border-red-500 bg-red-500/10' : 'border-white/5 bg-white/5 hover:bg-white/10'}`}
                   >
@@ -205,7 +205,7 @@ const ScheduleContent = () => {
             <h3 className="text-lg font-bold text-white mb-1">
               {selectedDate.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
             </h3>
-            
+
             {customSchedules[selectedDateStr] ? (
               <span className="inline-block px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400 text-xs font-bold mb-4">⭐ Custom Routine</span>
             ) : (
@@ -217,22 +217,22 @@ const ScheduleContent = () => {
               <div className="flex flex-col gap-3 animate-fade-in">
                 <div>
                   <label className="block text-xs font-bold text-gray-400 mb-1">Fokus Latihan</label>
-                  <input 
-                    type="text" 
-                    value={editFocus} 
-                    onChange={(e) => setEditFocus(e.target.value)} 
-                    className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500 transition-colors" 
-                    placeholder="Contoh: Upper Body" 
+                  <input
+                    type="text"
+                    value={editFocus}
+                    onChange={(e) => setEditFocus(e.target.value)}
+                    className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500 transition-colors"
+                    placeholder="Contoh: Upper Body"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-400 mb-1">Daftar Gerakan (pisahkan dengan koma)</label>
-                  <textarea 
-                    value={editExercises} 
-                    onChange={(e) => setEditExercises(e.target.value)} 
-                    className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500 transition-colors" 
-                    placeholder="Contoh: Push-ups, Pull-ups, Dips" 
-                    rows={3} 
+                  <textarea
+                    value={editExercises}
+                    onChange={(e) => setEditExercises(e.target.value)}
+                    className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500 transition-colors"
+                    placeholder="Contoh: Push-ups, Pull-ups, Dips"
+                    rows={3}
                   />
                   <p className="text-[10px] text-gray-500 mt-1">* Kosongkan semua form lalu simpan untuk mereset ke jadwal default.</p>
                 </div>
@@ -247,7 +247,7 @@ const ScheduleContent = () => {
                 <p className="text-white font-black text-xl mb-4" style={{ color: customSchedules[selectedDateStr] ? "#f59e0b" : dayColors[selectedDayIndex] }}>
                   {currentRoutine.focus}
                 </p>
-                
+
                 {currentRoutine.exercises.length > 0 ? (
                   <div className="flex flex-col gap-2 mb-6">
                     {currentRoutine.exercises.map((e, idx) => (
@@ -262,7 +262,7 @@ const ScheduleContent = () => {
                     <p className="text-sm text-gray-500">Tidak ada gerakan</p>
                   </div>
                 )}
-                
+
                 <button onClick={handleEditClick} className="w-full py-3 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl text-sm font-bold transition-all">
                   Edit Rutinitas Harian
                 </button>

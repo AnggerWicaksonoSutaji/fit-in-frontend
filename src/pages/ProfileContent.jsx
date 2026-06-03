@@ -29,7 +29,7 @@
  *   - value (string) : Nilai field
  *   - icon  (string) : Emoji ikon representasi field
  */
-const InfoRow = ({ label, value, icon }) => (
+const InfoRow = ({ label, value, icon, onEdit }) => (
   <div
     className="flex items-center gap-4 p-4 rounded-xl transition-all"
     style={{
@@ -50,12 +50,37 @@ const InfoRow = ({ label, value, icon }) => (
       <p className="text-gray-500 text-xs mb-0.5">{label}</p>
       <p className="text-white font-semibold text-sm truncate">{value || "-"}</p>
     </div>
+    
+    {/* Tombol edit opsional */}
+    {onEdit && (
+      <button 
+        onClick={onEdit}
+        className="text-xs font-bold px-3 py-1.5 rounded-lg transition-all hover:bg-white/10"
+        style={{ color: "#3b82f6", border: "1px solid rgba(59,130,246,0.3)" }}
+      >
+        Ubah
+      </button>
+    )}
   </div>
 );
 
+import { useState } from "react";
+
 const ProfileContent = ({ onLogout, onNavigate }) => {
-  // Ambil data pengguna dari localStorage
-  const user = JSON.parse(localStorage.getItem("fitinUser") || "{}");
+  // Ambil data pengguna dari localStorage sebagai state
+  const [user, setUser] = useState(() => JSON.parse(localStorage.getItem("fitinUser") || "{}"));
+
+  // Fungsi untuk mengganti username
+  const handleChangeUsername = () => {
+    const newName = window.prompt("Masukkan username baru:", user?.name || "");
+    if (newName && newName.trim() !== "") {
+      const updatedUser = { ...user, name: newName.trim() };
+      localStorage.setItem("fitinUser", JSON.stringify(updatedUser));
+      setUser(updatedUser);
+      // Refresh halaman agar nama di sidebar dan tempat lain ikut terupdate
+      window.location.reload();
+    }
+  };
 
   // Ambil inisial nama untuk avatar (fallback ke "A")
   const initial = (user?.name || "A")[0].toUpperCase();
@@ -106,7 +131,12 @@ const ProfileContent = ({ onLogout, onNavigate }) => {
 
       {/* ── Baris Informasi Akun ── */}
       <div className="flex flex-col gap-3 mb-5">
-        <InfoRow label="Username" value={user?.name} icon="👤" />
+        <InfoRow 
+          label="Username" 
+          value={user?.name} 
+          icon="👤" 
+          onEdit={handleChangeUsername} 
+        />
         <InfoRow label="Email" value={user?.email} icon="📧" />
         <InfoRow
           label="Member Sejak"
@@ -153,14 +183,16 @@ const ProfileContent = ({ onLogout, onNavigate }) => {
         </div>
       )}
 
-      {/* ── Tombol Ubah Data Diri ── */}
-      <button
-        onClick={() => onNavigate("data-diri")}
-        className="w-full py-3 rounded-xl font-bold text-white text-sm transition-all hover:brightness-110 mb-3"
-        style={{ background: "linear-gradient(135deg, #1a6ebd, #0a3a7a)", border: "1px solid rgba(26,110,189,0.5)" }}
-      >
-        📝 Ubah Data Diri
-      </button>
+      {/* ── Tombol Ubah Data Diri (HANYA MUNCUL UNTUK PREMIUM) ── */}
+      {isPremium && (
+        <button
+          onClick={() => onNavigate("data-diri")}
+          className="w-full py-3 rounded-xl font-bold text-white text-sm transition-all hover:brightness-110 mb-3"
+          style={{ background: "linear-gradient(135deg, #1a6ebd, #0a3a7a)", border: "1px solid rgba(26,110,189,0.5)" }}
+        >
+          📝 Ubah Data Diri
+        </button>
+      )}
 
       {/* ── Tombol Logout ── */}
       <button

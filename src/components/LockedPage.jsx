@@ -16,7 +16,7 @@
  * ─────────────────────────────────────────────────
  */
 
-const LockedPage = ({ title, emoji }) => (
+const LockedPage = ({ title, emoji, onNavigate }) => (
   <div className="flex flex-col items-center justify-center h-96 text-center">
     {/* Emoji ilustrasi fitur */}
     <div className="text-6xl mb-4">{emoji}</div>
@@ -31,7 +31,8 @@ const LockedPage = ({ title, emoji }) => (
 
     {/* Tombol upgrade */}
     <button
-      className="px-8 py-3 rounded-xl font-bold text-white transition-all hover:brightness-110"
+      onClick={() => onNavigate && onNavigate("payment")}
+      className="px-8 py-3 rounded-xl font-bold text-white transition-all hover:brightness-110 cursor-pointer"
       style={{ background: "linear-gradient(135deg,#e03030,#a00020)" }}
     >
       ⭐ Upgrade ke Premium

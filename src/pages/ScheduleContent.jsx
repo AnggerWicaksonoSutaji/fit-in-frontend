@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import LockedPage from "../components/LockedPage";
 
 import { dayColors, dayNames, schedules } from "../data/schedules";
+import { workoutCategories } from "../data/workoutCategories";
 
 const ScheduleContent = ({ onNavigate }) => {
   const isPremium = localStorage.getItem("fitinPremium") === "true";
@@ -16,6 +17,12 @@ const ScheduleContent = ({ onNavigate }) => {
   const [editFocus, setEditFocus] = useState("");
   const [editExercises, setEditExercises] = useState("");
 
+  // State untuk menyimpan rutinitas mingguan
+  const [weeklySchedules, setWeeklySchedules] = useState({});
+  const [editWeeklyIndex, setEditWeeklyIndex] = useState(null);
+  const [editWeeklyFocus, setEditWeeklyFocus] = useState("");
+  const [editWeeklyExercises, setEditWeeklyExercises] = useState("");
+
   useEffect(() => {
     // Memuat rutinitas kustom dari localStorage saat komponen di-mount
     const rawCustom = localStorage.getItem("fitinCustomSchedules");
@@ -26,13 +33,28 @@ const ScheduleContent = ({ onNavigate }) => {
         console.error("Gagal memuat custom schedules", e);
       }
     }
+
+    // Memuat rutinitas mingguan kustom
+    const rawWeekly = localStorage.getItem("fitinWeeklySchedules");
+    if (rawWeekly) {
+      try {
+        setWeeklySchedules(JSON.parse(rawWeekly));
+      } catch (e) {
+        console.error("Gagal memuat weekly schedules", e);
+      }
+    }
   }, []);
 
   if (!isPremium) return <LockedPage title="Workout Schedule" emoji="📅" onNavigate={onNavigate} />;
 
   const rawProfile = localStorage.getItem("fitinProfile");
   const profile = rawProfile ? JSON.parse(rawProfile) : { goal: "maintenance" };
-  const schedule = schedules[profile.goal] || schedules.maintenance;
+  const baseSchedule = schedules[profile.goal] || schedules.maintenance;
+  
+  // Merge jadwal default mingguan dengan custom mingguan user
+  const schedule = baseSchedule.map((s, i) => {
+    return weeklySchedules[i] ? { ...s, ...weeklySchedules[i] } : s;
+  });
 
   // Fungsi helper untuk memformat Date objek menjadi YYYY-MM-DD
   const formatDate = (d) => {
@@ -44,8 +66,8 @@ const ScheduleContent = ({ onNavigate }) => {
     const dateStr = formatDate(selectedDate);
     const updated = { ...customSchedules };
 
-    // Jika dikosongkan, hapus custom routine pada hari itu (kembali ke default)
-    if (!editFocus.trim() && !editExercises.trim()) {
+    // Jika memilih default, hapus custom routine pada hari itu (kembali ke default)
+    if (editFocus === "default" || (!editFocus.trim() && !editExercises.trim())) {
       delete updated[dateStr];
     } else {
       updated[dateStr] = {
@@ -59,6 +81,22 @@ const ScheduleContent = ({ onNavigate }) => {
     setIsEditing(false);
   };
 
+  // Fungsi untuk menyimpan perubahan jadwal mingguan
+  const handleSaveWeekly = (index) => {
+    const updated = { ...weeklySchedules };
+    if (editWeeklyFocus === "default" || (!editWeeklyFocus.trim() && !editWeeklyExercises.trim())) {
+      delete updated[index];
+    } else {
+      updated[index] = {
+        focus: editWeeklyFocus,
+        exercises: editWeeklyExercises.split(",").map(e => e.trim()).filter(e => e)
+      };
+    }
+    setWeeklySchedules(updated);
+    localStorage.setItem("fitinWeeklySchedules", JSON.stringify(updated));
+    setEditWeeklyIndex(null);
+  };
+
   // Mendapatkan detail rutinitas untuk tanggal yang dipilih
   const selectedDateStr = formatDate(selectedDate);
   const selectedDayIndex = (selectedDate.getDay() + 6) % 7; // Convert 0(Sun)-6(Sat) to 0(Mon)-6(Sun)
@@ -66,8 +104,13 @@ const ScheduleContent = ({ onNavigate }) => {
   const currentRoutine = customSchedules[selectedDateStr] || defaultRoutine;
 
   const handleEditClick = () => {
-    setEditFocus(currentRoutine.focus);
-    setEditExercises(currentRoutine.exercises.join(", "));
+    if (!customSchedules[selectedDateStr]) {
+      setEditFocus("default");
+      setEditExercises("");
+    } else {
+      setEditFocus(currentRoutine.focus);
+      setEditExercises(currentRoutine.exercises.join(", "));
+    }
     setIsEditing(true);
   };
 
@@ -110,14 +153,16 @@ const ScheduleContent = ({ onNavigate }) => {
       </div>
 
       {viewMode === "weekly" ? (
-        /* ── TAMPILAN MINGGUAN (DEFAULT LAMA) ── */
+        /* ── TAMPILAN MINGGUAN ── */
         <div className="flex flex-col gap-3">
           {schedule.map((s, i) => {
             const isToday = i === (new Date().getDay() + 6) % 7;
+            const isEditingThis = editWeeklyIndex === i;
+
             return (
               <div
                 key={s.day}
-                className="rounded-2xl p-4 flex items-start gap-4 relative overflow-hidden transition-all"
+                className="rounded-2xl p-4 flex flex-col relative overflow-hidden transition-all"
                 style={{
                   background: isToday ? `linear-gradient(to right, rgba(255,255,255,0.05), ${dayColors[i]}20)` : "rgba(255,255,255,0.03)",
                   border: `1px solid ${isToday ? dayColors[i] : `${dayColors[i]}20`}`,
@@ -132,19 +177,80 @@ const ScheduleContent = ({ onNavigate }) => {
                     HARI INI
                   </span>
                 )}
-                <div className="w-16 text-center flex-shrink-0">
-                  <p className="font-black text-sm" style={{ color: dayColors[i] }}>{s.day}</p>
-                </div>
-                <div className="flex-1">
-                  <p className="text-white font-bold text-sm mb-1">{s.focus}</p>
-                  <div className="flex flex-wrap gap-1">
-                    {s.exercises.map((e) => (
-                      <span key={e} className="px-2 py-0.5 rounded-full text-xs" style={{ background: `${dayColors[i]}15`, color: dayColors[i] }}>
-                        {e}
-                      </span>
-                    ))}
+                
+                {isEditingThis ? (
+                  <div className="flex flex-col gap-3 mt-1 animate-fade-in">
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="w-16 text-center font-black text-sm" style={{ color: dayColors[i] }}>{s.day}</div>
+                      <h4 className="text-white font-bold text-sm">Edit Jadwal {s.day}</h4>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-400 mb-1">Pilih Program Latihan</label>
+                      <select 
+                        value={editWeeklyFocus}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setEditWeeklyFocus(val);
+                          if (val === "default" || val === "Rest Day" || val === "") {
+                            setEditWeeklyExercises("");
+                          } else {
+                            const cat = workoutCategories.find(c => c.title === val);
+                            if (cat) {
+                              setEditWeeklyExercises(cat.exercises.map(ex => ex.name).join(", "));
+                            }
+                          }
+                        }}
+                        className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500 transition-colors mb-2"
+                      >
+                        <option value="default">Jadwal Default Program</option>
+                        <option value="Rest Day">Rest Day (Istirahat)</option>
+                        <optgroup label="Program Tersedia">
+                          {workoutCategories.map(c => (
+                            <option key={c.id} value={c.title}>{c.title}</option>
+                          ))}
+                        </optgroup>
+                      </select>
+                    </div>
+                    <div className="flex gap-2 mt-1">
+                      <button onClick={() => handleSaveWeekly(i)} className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg text-xs font-bold transition-all shadow-lg shadow-red-500/20">Simpan</button>
+                      <button onClick={() => setEditWeeklyIndex(null)} className="flex-1 bg-white/10 hover:bg-white/20 text-white py-2 rounded-lg text-xs font-bold transition-all">Batal</button>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="flex items-start gap-4">
+                    <div className="w-16 text-center flex-shrink-0 mt-1">
+                      <p className="font-black text-sm" style={{ color: dayColors[i] }}>{s.day}</p>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between mb-1">
+                        <p className="text-white font-bold text-sm">{s.focus}</p>
+                        <button onClick={() => { 
+                          if (!weeklySchedules[i]) {
+                            setEditWeeklyFocus("default");
+                            setEditWeeklyExercises("");
+                          } else {
+                            setEditWeeklyFocus(weeklySchedules[i].focus); 
+                            setEditWeeklyExercises(weeklySchedules[i].exercises.join(", ")); 
+                          }
+                          setEditWeeklyIndex(i); 
+                        }} className="text-gray-400 hover:text-white transition-colors" title={`Edit jadwal hari ${s.day}`}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                        </button>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {s.exercises.length > 0 ? (
+                          s.exercises.map((e) => (
+                            <span key={e} className="px-2 py-0.5 rounded-full text-xs" style={{ background: `${dayColors[i]}15`, color: dayColors[i] }}>
+                              {e}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-xs text-gray-500 italic">Tidak ada gerakan (Rest)</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}
@@ -216,25 +322,31 @@ const ScheduleContent = ({ onNavigate }) => {
               /* Mode Edit */
               <div className="flex flex-col gap-3 animate-fade-in">
                 <div>
-                  <label className="block text-xs font-bold text-gray-400 mb-1">Fokus Latihan</label>
-                  <input
-                    type="text"
+                  <label className="block text-xs font-bold text-gray-400 mb-1">Pilih Program Latihan</label>
+                  <select 
                     value={editFocus}
-                    onChange={(e) => setEditFocus(e.target.value)}
-                    className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500 transition-colors"
-                    placeholder="Contoh: Upper Body"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-400 mb-1">Daftar Gerakan (pisahkan dengan koma)</label>
-                  <textarea
-                    value={editExercises}
-                    onChange={(e) => setEditExercises(e.target.value)}
-                    className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500 transition-colors"
-                    placeholder="Contoh: Push-ups, Pull-ups, Dips"
-                    rows={3}
-                  />
-                  <p className="text-[10px] text-gray-500 mt-1">* Kosongkan semua form lalu simpan untuk mereset ke jadwal default.</p>
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setEditFocus(val);
+                      if (val === "default" || val === "Rest Day" || val === "") {
+                        setEditExercises("");
+                      } else {
+                        const cat = workoutCategories.find(c => c.title === val);
+                        if (cat) {
+                          setEditExercises(cat.exercises.map(ex => ex.name).join(", "));
+                        }
+                      }
+                    }}
+                    className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500 transition-colors mb-2"
+                  >
+                    <option value="default">Jadwal Default Program</option>
+                    <option value="Rest Day">Rest Day (Istirahat)</option>
+                    <optgroup label="Program Tersedia">
+                      {workoutCategories.map(c => (
+                        <option key={c.id} value={c.title}>{c.title}</option>
+                      ))}
+                    </optgroup>
+                  </select>
                 </div>
                 <div className="flex gap-2 mt-2">
                   <button onClick={handleSaveCustom} className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-lg text-sm font-bold transition-all shadow-lg shadow-red-500/20">Simpan</button>

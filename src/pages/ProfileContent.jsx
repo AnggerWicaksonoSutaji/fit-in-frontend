@@ -50,10 +50,10 @@ const InfoRow = ({ label, value, icon, onEdit }) => (
       <p className="text-gray-500 text-xs mb-0.5">{label}</p>
       <p className="text-white font-semibold text-sm truncate">{value || "-"}</p>
     </div>
-    
+
     {/* Tombol edit opsional */}
     {onEdit && (
-      <button 
+      <button
         onClick={onEdit}
         className="text-xs font-bold px-3 py-1.5 rounded-lg transition-all hover:bg-white/10"
         style={{ color: "#3b82f6", border: "1px solid rgba(59,130,246,0.3)" }}
@@ -64,23 +64,75 @@ const InfoRow = ({ label, value, icon, onEdit }) => (
   </div>
 );
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import axios from "axios";
+
+const api = axios.create({
+  baseURL: "http://127.0.0.1:8000/api",
+  headers: {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  },
+});
 
 const ProfileContent = ({ onLogout, onNavigate }) => {
   // Ambil data pengguna dari localStorage sebagai state
   const [user, setUser] = useState(() => JSON.parse(localStorage.getItem("fitinUser") || "{}"));
 
-  // Fungsi untuk mengganti username
-  const handleChangeUsername = () => {
-    const newName = window.prompt("Masukkan username baru:", user?.name || "");
-    if (newName && newName.trim() !== "") {
-      const updatedUser = { ...user, name: newName.trim() };
+  const [tempUsername, setTempUsername] = useState(user?.name || "");
+  const [isEditingUsername, setIsEditingUsername] = useState(false);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    setTempUsername(user?.name || "");
+  }, [user?.name]);
+
+  useEffect(() => {
+    if (isEditingUsername && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isEditingUsername]);
+
+  const handleSaveUsername = async () => {
+    if (!tempUsername || tempUsername.trim() === "" || tempUsername.trim() === user?.name) {
+      setIsEditingUsername(false);
+      setTempUsername(user?.name || "");
+      return;
+    }
+    try {
+      const token = localStorage.getItem("fitinToken");
+      if (!token) {
+        alert("Sesi Anda telah berakhir. Silakan login ulang.");
+        return;
+      }
+
+      const res = await api.patch(
+        "/user/username",
+        { username: tempUsername.trim() },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const updatedUser = { ...user, name: res.data.user.name };
       localStorage.setItem("fitinUser", JSON.stringify(updatedUser));
       setUser(updatedUser);
-      // Refresh halaman agar nama di sidebar dan tempat lain ikut terupdate
+      setIsEditingUsername(false);
+
       window.location.reload();
+    } catch (err) {
+      console.error("Error changing username:", err);
+      if (err.response?.status === 401) {
+        alert("Sesi Anda telah berakhir. Silakan logout dan login ulang.");
+        return;
+      }
+      const message = err.response?.data?.errors?.username?.[0]
+        || err.response?.data?.message
+        || `Gagal mengubah username.`;
+      alert(message);
+      setIsEditingUsername(false);
+      setTempUsername(user?.name || "");
     }
   };
+
 
   // Ambil inisial nama untuk avatar (fallback ke "A")
   const initial = (user?.name || "A")[0].toUpperCase();
@@ -131,12 +183,45 @@ const ProfileContent = ({ onLogout, onNavigate }) => {
 
       {/* ── Baris Informasi Akun ── */}
       <div className="flex flex-col gap-3 mb-5">
-        <InfoRow 
-          label="Username" 
-          value={user?.name} 
-          icon="👤" 
-          onEdit={handleChangeUsername} 
-        />
+        <div
+          className="flex items-center gap-4 p-4 rounded-xl transition-all"
+          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}
+        >
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
+            style={{ background: "rgba(224,48,48,0.1)" }}
+          >
+            👤
+          </div>
+          <div className="flex-1 min-w-0" onClick={() => setIsEditingUsername(true)}>
+            <p className="text-gray-500 text-xs mb-0.5">Username (klik untuk mengubah)</p>
+            {isEditingUsername ? (
+              <input
+                ref={inputRef}
+                type="text"
+                value={tempUsername}
+                onChange={(e) => setTempUsername(e.target.value)}
+                onBlur={handleSaveUsername}
+                onKeyDown={(e) => e.key === 'Enter' && handleSaveUsername()}
+                className="w-full bg-transparent text-white font-semibold text-sm focus:outline-none focus:border-b focus:border-blue-500 pb-0.5 transition-all"
+                placeholder="Masukkan username"
+              />
+            ) : (
+              <p className="text-white font-semibold text-sm truncate cursor-pointer hover:text-blue-400 transition-colors">
+                {user?.name || "-"}
+              </p>
+            )}
+          </div>
+          {isEditingUsername && (
+            <button
+              onMouseDown={(e) => { e.preventDefault(); handleSaveUsername(); }}
+              className="text-xs font-bold px-3 py-1.5 rounded-lg transition-all hover:bg-white/10"
+              style={{ color: "#3b82f6", border: "1px solid rgba(59,130,246,0.3)" }}
+            >
+              Simpan
+            </button>
+          )}
+        </div>
         <InfoRow label="Email" value={user?.email} icon="📧" />
         <InfoRow
           label="Member Sejak"

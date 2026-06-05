@@ -4,6 +4,10 @@ import Dashboard from "./Dashboard";
 import Payment from "./Payment";
 import DataDiriPage from "./pages/DataDiriPage";
 import AdminApp from "./pages/admin/AdminApp";
+import bgWelcome from "./assets/bg-wp.png";
+import bgLogin from "./assets/bg-login.png";
+import bgRegister from "./assets/bg-register.png";
+import logoPng from "./assets/logo.png";
 
 /* ─── AXIOS BASE CONFIG ─── */
 const api = axios.create({
@@ -14,51 +18,9 @@ const api = axios.create({
   },
 });
 
-/* ─── FIT-IN LOGO SVG ─── */
+/* ─── FIT-IN LOGO PNG ─── */
 const FitInLogo = ({ size = 120 }) => (
-  <svg width={size} height={size} viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M20 80 Q40 40 100 30 Q160 40 180 80 Q160 140 100 170 Q40 140 20 80Z"
-      fill="url(#shieldGrad)" opacity="0.15" />
-    <path d="M15 85 Q35 50 100 45 L85 110 Q50 105 15 85Z"
-      fill="url(#redGrad)" opacity="0.9" />
-    <path d="M185 85 Q165 50 100 45 L115 110 Q150 105 185 85Z"
-      fill="url(#blueGrad)" opacity="0.9" />
-    <path d="M85 110 Q100 170 100 170 Q100 170 115 110 L100 45Z"
-      fill="url(#centerGrad)" />
-    <ellipse cx="100" cy="82" rx="18" ry="14" fill="url(#eyeGrad)" />
-    <ellipse cx="100" cy="82" rx="9" ry="7" fill="#1a0a0a" />
-    <text x="100" y="138" textAnchor="middle"
-      fontFamily="'Arial Black', sans-serif" fontSize="18"
-      fontWeight="900" letterSpacing="3" fill="url(#textGrad)">FIT-IN</text>
-    <defs>
-      <linearGradient id="shieldGrad" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stopColor="#e03030" />
-        <stop offset="100%" stopColor="#1a6ebd" />
-      </linearGradient>
-      <linearGradient id="redGrad" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stopColor="#ff2020" />
-        <stop offset="100%" stopColor="#c0001a" />
-      </linearGradient>
-      <linearGradient id="blueGrad" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stopColor="#1a6ebd" />
-        <stop offset="100%" stopColor="#0a3a7a" />
-      </linearGradient>
-      <linearGradient id="centerGrad" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stopColor="#e03030" />
-        <stop offset="50%" stopColor="#8b1a8b" />
-        <stop offset="100%" stopColor="#1a6ebd" />
-      </linearGradient>
-      <radialGradient id="eyeGrad" cx="50%" cy="40%">
-        <stop offset="0%" stopColor="#ff5555" />
-        <stop offset="100%" stopColor="#cc0000" />
-      </radialGradient>
-      <linearGradient id="textGrad" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0%" stopColor="#e03030" />
-        <stop offset="50%" stopColor="#cc44cc" />
-        <stop offset="100%" stopColor="#1a6ebd" />
-      </linearGradient>
-    </defs>
-  </svg>
+  <img src={logoPng} alt="Fit-In Logo" style={{ width: size, height: size, objectFit: 'contain' }} className="drop-shadow-lg" />
 );
 
 /* ─── ICONS ─── */
@@ -90,6 +52,7 @@ const BackIcon = () => (
 const DarkBg = ({ children, variant = "default" }) => {
   const gradients = {
     default: "from-neutral-950 via-neutral-900 to-neutral-950",
+    welcome: "from-neutral-950 via-neutral-900 to-neutral-950",
     login: "from-black via-neutral-900 to-neutral-950",
     register: "from-neutral-950 via-stone-900 to-black",
   };
@@ -98,6 +61,20 @@ const DarkBg = ({ children, variant = "default" }) => {
       className={`relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br ${gradients[variant]}`}
       style={{ fontFamily: "'Trebuchet MS', 'Segoe UI', sans-serif" }}
     >
+      {["welcome", "login", "register"].includes(variant) && (
+        <>
+          <div
+            className="absolute inset-0 z-0 bg-no-repeat bg-[length:100%_100%] md:bg-cover md:bg-center"
+            style={{
+              backgroundImage: `url(${variant === "welcome" ? bgWelcome :
+                  variant === "login" ? bgLogin :
+                    bgRegister
+                })`
+            }}
+          />
+          <div className="absolute inset-0 z-0 bg-black/60" />
+        </>
+      )}
       <div className="absolute inset-0 opacity-30 pointer-events-none"
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E")`,
@@ -109,7 +86,7 @@ const DarkBg = ({ children, variant = "default" }) => {
         style={{ background: "radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.7) 100%)" }} />
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-40 rounded-full pointer-events-none"
         style={{ background: "radial-gradient(ellipse, rgba(200,20,20,0.15) 0%, transparent 70%)" }} />
-      <div className="relative z-10 w-full">{children}</div>
+      <div className="z-10 w-full">{children}</div>
     </div>
   );
 };
@@ -142,12 +119,17 @@ const ErrorBox = ({ message }) =>
    PAGE 1 — WELCOME
 ════════════════════════════════════════ */
 const WelcomePage = ({ onNavigate }) => (
-  <DarkBg variant="default">
+  <DarkBg variant="welcome">
     <div className="flex flex-col items-center justify-center px-6 py-12 text-center">
-      <p className="text-xs tracking-[0.5em] font-bold mb-4"
-        style={{ color: "#e03030", textShadow: "0 0 12px rgba(220,30,30,0.5)" }}>
+      <h1 className="text-4xl md:text-5xl font-black tracking-[0.2em] mb-4 uppercase"
+        style={{
+          background: "linear-gradient(90deg, #e03030, #cc44cc, #1a6ebd)",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          filter: "drop-shadow(0 4px 16px rgba(224,48,48,0.6))"
+        }}>
         FIT-IN
-      </p>
+      </h1>
       <p className="text-gray-400 text-sm tracking-widest mb-6 uppercase">Welcome to</p>
       <div className="mb-8" style={{ filter: "drop-shadow(0 0 24px rgba(200,30,30,0.4))" }}>
         <FitInLogo size={140} />
@@ -279,8 +261,8 @@ const LoginPage = ({ onNavigate }) => {
     <DarkBg variant="login">
       <button
         onClick={() => onNavigate("welcome")}
-        className="absolute top-4 left-4 z-20 flex items-center justify-center w-10 h-10
-          rounded border border-gray-600 text-gray-300 hover:border-red-500 hover:text-red-400 transition-all"
+        className="absolute top-6 left-6 md:top-8 md:left-8 z-20 flex items-center justify-center w-10 h-10
+          rounded-full border-2 border-neutral-400 bg-neutral-900/90 backdrop-blur-sm text-white hover:border-red-500 hover:text-red-400 hover:scale-105 active:scale-95 transition-all duration-300 shadow-md"
       >
         <BackIcon />
       </button>
@@ -290,11 +272,12 @@ const LoginPage = ({ onNavigate }) => {
           <FitInLogo size={130} />
         </div>
 
-        <h1 className="text-2xl font-black tracking-[0.3em] mb-8 uppercase"
+        <h1 className="text-4xl md:text-5xl font-black tracking-[0.2em] mb-8 uppercase"
           style={{
             background: "linear-gradient(90deg, #e03030, #cc44cc, #1a6ebd)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
+            filter: "drop-shadow(0 4px 16px rgba(224,48,48,0.6))"
           }}>
           LOGIN
         </h1>
@@ -408,8 +391,8 @@ const RegisterPage = ({ onNavigate }) => {
     <DarkBg variant="register">
       <button
         onClick={() => onNavigate("welcome")}
-        className="absolute top-4 left-4 z-20 flex items-center justify-center w-10 h-10
-          rounded border border-gray-600 text-gray-300 hover:border-blue-500 hover:text-blue-400 transition-all"
+        className="absolute top-6 left-6 md:top-8 md:left-8 z-20 flex items-center justify-center w-10 h-10
+          rounded-full border-2 border-neutral-400 bg-neutral-900/90 backdrop-blur-sm text-white hover:border-blue-500 hover:text-blue-400 hover:scale-105 active:scale-95 transition-all duration-300 shadow-md"
       >
         <BackIcon />
       </button>
@@ -419,11 +402,12 @@ const RegisterPage = ({ onNavigate }) => {
           <FitInLogo size={120} />
         </div>
 
-        <h1 className="text-2xl font-black tracking-[0.3em] mb-6 uppercase"
+        <h1 className="text-4xl md:text-5xl font-black tracking-[0.2em] mb-6 uppercase"
           style={{
             background: "linear-gradient(90deg, #e03030, #cc44cc, #1a6ebd)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
+            filter: "drop-shadow(0 4px 16px rgba(224,48,48,0.6))"
           }}>
           REGISTER
         </h1>

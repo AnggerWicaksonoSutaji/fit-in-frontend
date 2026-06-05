@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-const API = "http://127.0.0.1:8001/api/admin";
+const API = "http://127.0.0.1:8000/api/admin";
 
 const StatCard = ({ label, value, color, icon, sub }) => (
   <div

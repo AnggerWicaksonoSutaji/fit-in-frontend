@@ -1,5 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
+import axios from "axios";
 import { navItems } from "./data/navItems";
+import { schedules } from "./data/schedules";
 import Sidebar from "./components/Sidebar";
 import UpgradePopup from "./components/UpgradePopup";
 
@@ -117,6 +119,75 @@ export default function Dashboard({ onLogout, onNavigate }) {
     }
   }, [active, userId, stats.todaySessions, stats.todayCalories]);
 
+  const syncStatsToBackend = async (newStats) => {
+    try {
+      const token = localStorage.getItem("fitinToken");
+      if (!token) return;
+      const lastDate = localStorage.getItem(`fitinLastWorkoutDate_${userId}`);
+      const rawHistory = localStorage.getItem(`fitinDailyHistory_${userId}`);
+      const history = rawHistory ? JSON.parse(rawHistory) : {};
+
+      await axios.post(
+        "http://127.0.0.1:8000/api/user/sync-stats",
+        {
+          workouts: newStats.workouts || 0,
+          calories: newStats.calories || 0,
+          streak: newStats.streak || 0,
+          today_sessions: newStats.todaySessions || 0,
+          today_calories: newStats.todayCalories || 0,
+          last_workout_date: lastDate || null,
+          daily_history: history
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+    } catch (err) {
+      console.error("Failed to sync stats to backend:", err);
+    }
+  };
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const token = localStorage.getItem("fitinToken");
+        if (!token) return;
+        const res = await axios.get("http://127.0.0.1:8000/api/user/sync-stats", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = res.data;
+        if (data && data.workouts !== undefined) {
+          const localRaw = localStorage.getItem(`fitinStats_${userId}`);
+          let localStats = { workouts: 0, calories: 0, streak: 0, todaySessions: 0, todayCalories: 0 };
+          try { if (localRaw && localRaw !== "undefined") localStats = JSON.parse(localRaw); } catch (e) {}
+
+          // Jika backend kosong tapi lokal ada datanya (migrasi pertama kali), push lokal ke backend
+          if (data.workouts === 0 && data.calories === 0 && (localStats.workouts > 0 || localStats.calories > 0)) {
+            syncStatsToBackend(localStats);
+            return;
+          }
+
+          const updatedStats = {
+            workouts: data.workouts,
+            calories: data.calories,
+            streak: data.streak,
+            todaySessions: data.today_sessions,
+            todayCalories: data.today_calories
+          };
+          setStats(updatedStats);
+          localStorage.setItem(`fitinStats_${userId}`, JSON.stringify(updatedStats));
+          if (data.last_workout_date) {
+            localStorage.setItem(`fitinLastWorkoutDate_${userId}`, data.last_workout_date);
+          }
+          if (data.daily_history) {
+            localStorage.setItem(`fitinDailyHistory_${userId}`, JSON.stringify(data.daily_history));
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch stats from backend:", err);
+      }
+    };
+    fetchStats();
+  }, [userId]);
+
   const [showStreakPopup, setShowStreakPopup] = useState(false);
   const [newStreakCount, setNewStreakCount] = useState(0);
 
@@ -159,8 +230,39 @@ export default function Dashboard({ onLogout, onNavigate }) {
     };
   };
 
-  const beratBadan = 70; // Mock kg
-  const MET = 6.0;
+  const rawProfile = localStorage.getItem("fitinProfile");
+  const profileObj = rawProfile ? JSON.parse(rawProfile) : {};
+  const beratBadan = parseFloat(profileObj?.weight) || 70;
+  
+  const MET = useMemo(() => {
+    const userGoal = (typeof profileObj?.goal === 'string' && profileObj.goal) ? profileObj.goal.toLowerCase() : "maintenance";
+    const dToday = new Date();
+    const dateStr = `${dToday.getFullYear()}-${String(dToday.getMonth() + 1).padStart(2, '0')}-${String(dToday.getDate()).padStart(2, '0')}`;
+    const dayIndex = (dToday.getDay() + 6) % 7;
+
+    const rawCustom = localStorage.getItem("fitinCustomSchedules");
+    let customSchedules = {};
+    try { if (rawCustom && rawCustom !== "undefined") customSchedules = JSON.parse(rawCustom); } catch (e) { }
+
+    const rawWeekly = localStorage.getItem("fitinWeeklySchedules");
+    let weeklySchedules = {};
+    try { if (rawWeekly && rawWeekly !== "undefined") weeklySchedules = JSON.parse(rawWeekly); } catch (e) { }
+
+    const baseRoutine = (schedules[userGoal] || schedules.maintenance)[dayIndex];
+    const defaultRoutine = weeklySchedules[dayIndex] ? { ...baseRoutine, ...weeklySchedules[dayIndex] } : baseRoutine;
+    const todayRoutine = customSchedules[dateStr] || defaultRoutine || { focus: "Rest Day" };
+    const focusLower = todayRoutine.focus.toLowerCase();
+
+    if (focusLower.includes("hiit") || focusLower.includes("cardio") || focusLower.includes("sprint") || focusLower.includes("run")) {
+      return 8.0;
+    } else if (focusLower.includes("yoga") || focusLower.includes("stretch") || focusLower.includes("recovery")) {
+      return 3.0;
+    } else if (focusLower.includes("rest")) {
+      return 1.0;
+    } else {
+      return 6.0; // Default untuk latihan beban, upper body, lower body, dll.
+    }
+  }, [active]); // Re-calculate saat ganti tab untuk merespon perubahan schedule
 
   useEffect(() => {
     if (isWorkoutActive) {
@@ -199,6 +301,7 @@ export default function Dashboard({ onLogout, onNavigate }) {
         setShowStreakPopup(true);
         // Auto-hide popup setelah 3 detik
         setTimeout(() => setShowStreakPopup(false), 3000);
+        syncStatsToBackend(updated);
         return updated;
       });
     }
@@ -218,6 +321,7 @@ export default function Dashboard({ onLogout, onNavigate }) {
           setNewStreakCount(newStreak);
           setShowStreakPopup(true);
           setTimeout(() => setShowStreakPopup(false), 3000);
+          syncStatsToBackend(updated);
           return updated;
         });
       }
@@ -258,7 +362,7 @@ export default function Dashboard({ onLogout, onNavigate }) {
         const trimmed = {};
         sortedKeys.forEach(k => { trimmed[k] = history[k]; });
         localStorage.setItem(`fitinDailyHistory_${userId}`, JSON.stringify(trimmed));
-
+        syncStatsToBackend(newStats);
         return newStats;
       });
     };
@@ -281,6 +385,7 @@ export default function Dashboard({ onLogout, onNavigate }) {
           workoutSeconds={workoutSeconds}
           liveCalories={((MET * 3.5 * beratBadan) / 200) * (workoutSeconds / 60)}
           stats={stats}
+          triggerStreak={triggerStreakOnly}
         />;
         case "workout": return <WorkoutContent onNavigate={onNavigate} setActive={setActive} />;
         case "video": return <VideoContent initialCategory={selectedVideoCategory} onClearCategory={() => setSelectedVideoCategory(null)} triggerStreak={triggerStreakOnly} />;
@@ -294,11 +399,12 @@ export default function Dashboard({ onLogout, onNavigate }) {
           onNavigate={onNavigate}
           setActive={setActive}
           setSelectedVideoCategory={setSelectedVideoCategory}
-          startGlobalWorkout={startGlobalWorkout}
+          startGlobalWorkout={requestGlobalWorkout}
           isWorkoutActive={isWorkoutActive}
           workoutSeconds={workoutSeconds}
           liveCalories={((MET * 3.5 * beratBadan) / 200) * (workoutSeconds / 60)}
           stats={stats}
+          triggerStreak={triggerStreakOnly}
         />;
       }
     };
@@ -352,9 +458,30 @@ export default function Dashboard({ onLogout, onNavigate }) {
         <main className="flex-1 overflow-y-auto">
           <div className="sticky top-0 z-20 flex items-center justify-between px-6 py-4"
             style={{ background: "rgba(10,10,10,0.9)", backdropFilter: "blur(12px)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-            <h1 className="text-white font-bold text-lg capitalize">
-              {navItems.find(n => n.key === active)?.label || "Dashboard"}
-            </h1>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setCollapsed(!collapsed)}
+                className="text-gray-400 hover:text-white transition-colors p-1"
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  {collapsed ? (
+                    <>
+                      <path d="M3 12h18" />
+                      <path d="M3 6h18" />
+                      <path d="M3 18h18" />
+                    </>
+                  ) : (
+                    <>
+                      <path d="M18 6L6 18" />
+                      <path d="M6 6l12 12" />
+                    </>
+                  )}
+                </svg>
+              </button>
+              <h1 className="text-white font-bold text-lg capitalize">
+                {navItems.find(n => n.key === active)?.label || "Dashboard"}
+              </h1>
+            </div>
             <div className="flex items-center gap-3">
               {!isPremium ? (
                 <button

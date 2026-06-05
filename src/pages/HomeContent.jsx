@@ -25,7 +25,7 @@ import { workoutPrograms } from "../data/workoutPrograms";
 import { workoutCategories } from "../data/workoutCategories";
 import { dayColors, dayNames, schedules } from "../data/schedules";
 
-const HomeContent = ({ user, onNavigate, setActive, setSelectedVideoCategory, startGlobalWorkout, stats: propStats, isWorkoutActive, workoutSeconds, liveCalories }) => {
+const HomeContent = ({ user, onNavigate, setActive, setSelectedVideoCategory, startGlobalWorkout, stats: propStats, isWorkoutActive, workoutSeconds, liveCalories, triggerStreak }) => {
   const [restDayPopup, setRestDayPopup] = useState(false);
   // Cek apakah pengguna sudah berlangganan premium
   const isPremium = localStorage.getItem("fitinPremium") === "true";
@@ -36,7 +36,7 @@ const HomeContent = ({ user, onNavigate, setActive, setSelectedVideoCategory, st
   // Ambil data profile untuk mengetahui program (goal) yang aktif
   const rawProfile = localStorage.getItem("fitinProfile");
   let profile = {};
-  try { if (rawProfile && rawProfile !== "undefined") profile = JSON.parse(rawProfile); } catch (e) {}
+  try { if (rawProfile && rawProfile !== "undefined") profile = JSON.parse(rawProfile); } catch (e) { }
   const userGoal = (typeof profile?.goal === 'string' && profile.goal) ? profile.goal.toLowerCase() : "maintenance";
   const activeProgram = workoutPrograms.find(p => p.title.toLowerCase() === userGoal) || workoutPrograms.find(p => p.title.toLowerCase() === "maintenance");
 
@@ -50,10 +50,17 @@ const HomeContent = ({ user, onNavigate, setActive, setSelectedVideoCategory, st
 
   const rawCustom = localStorage.getItem("fitinCustomSchedules");
   let customSchedules = {};
-  try { if (rawCustom && rawCustom !== "undefined") customSchedules = JSON.parse(rawCustom); } catch (e) {}
-  const defaultRoutine = (schedules[userGoal] || schedules.maintenance)[dayIndex];
+  try { if (rawCustom && rawCustom !== "undefined") customSchedules = JSON.parse(rawCustom); } catch (e) { }
+
+  const rawWeekly = localStorage.getItem("fitinWeeklySchedules");
+  let weeklySchedules = {};
+  try { if (rawWeekly && rawWeekly !== "undefined") weeklySchedules = JSON.parse(rawWeekly); } catch (e) { }
+
+  const baseRoutine = (schedules[userGoal] || schedules.maintenance)[dayIndex];
+  const defaultRoutine = weeklySchedules[dayIndex] ? { ...baseRoutine, ...weeklySchedules[dayIndex] } : baseRoutine;
+
   const todayRoutine = customSchedules[dateStr] || defaultRoutine || { focus: "Rest Day", exercises: [] };
-  const isCustomRoutine = !!customSchedules[dateStr];
+  const isCustomRoutine = !!customSchedules[dateStr] || !!weeklySchedules[dayIndex];
   const todayColor = isCustomRoutine ? "#f59e0b" : dayColors[dayIndex];
 
   // Fungsi untuk memulai workout harian dan melihat videonya
@@ -111,7 +118,7 @@ const HomeContent = ({ user, onNavigate, setActive, setSelectedVideoCategory, st
 
         {/* Sapaan pengguna */}
         <h2 className="text-2xl font-black text-white mb-1">
-          Selamat datang, {user?.name || "Athlete"}! 💪
+          Selamat datang, {user?.name || "Athlete"}!
         </h2>
         <p className="text-white/70 text-sm">Hari {currentDay} adalah hari yang tepat untuk berolahraga!</p>
 
@@ -270,13 +277,25 @@ const HomeContent = ({ user, onNavigate, setActive, setSelectedVideoCategory, st
             <p className="text-gray-400 text-sm mb-6">
               Sekarang adalah jadwal Rest Day. Selamat beristirahat dan pulihkan tenagamu untuk workout selanjutnya!
             </p>
-            <button
-              onClick={() => setRestDayPopup(false)}
-              className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:brightness-110"
-              style={{ background: "linear-gradient(135deg, #1a6ebd, #0a3a7a)" }}
-            >
-              Oke, Terima Kasih
-            </button>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => {
+                  if (triggerStreak) triggerStreak();
+                  setRestDayPopup(false);
+                }}
+                className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:brightness-110 shadow-[0_0_15px_rgba(251,191,36,0.2)]"
+                style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)" }}
+              >
+                ⭐ Nyalakan Streak
+              </button>
+              <button
+                onClick={() => setRestDayPopup(false)}
+                className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:bg-white/10"
+                style={{ border: "1px solid rgba(255,255,255,0.1)" }}
+              >
+                Tutup Peringatan
+              </button>
+            </div>
           </div>
         </div>
       )}

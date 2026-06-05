@@ -40,7 +40,7 @@ export default function DataDiriPage({ onSuccess, onBack }) {
 
     // Simpan data diri ke localStorage
     localStorage.setItem("fitinProfile", JSON.stringify(profile));
-    
+
     // Hitung TDEE lokal
     const w = parseFloat(profile.weight);
     const h = parseFloat(profile.height);
@@ -50,17 +50,17 @@ export default function DataDiriPage({ onSuccess, onBack }) {
       : 10 * w + 6.25 * h - 5 * a - 161;
     const actMultiplier = { jarang: 1.2, sedang: 1.55, sering: 1.725 };
     const tdee = Math.round(bmr * (actMultiplier[profile.activityLevel] || 1.55));
-    
+
     let targetCal = tdee;
     if (profile.goal === "cutting") targetCal = Math.round(tdee * 0.8);
     if (profile.goal === "bulking") targetCal = Math.round(tdee * 1.15);
-    
+
     const protein = Math.round((targetCal * 0.3) / 4);
     const carbs = Math.round((targetCal * 0.45) / 4);
     const fat = Math.round((targetCal * 0.25) / 9);
-    
+
     localStorage.setItem("fitinNutrition", JSON.stringify({ tdee, targetCal, protein, carbs, fat }));
-    
+
     // Inisialisasi stats jika belum ada
     if (!localStorage.getItem("fitinStats")) {
       localStorage.setItem("fitinStats", JSON.stringify({ workouts: 0, calories: 0, streak: 0, goalPct: 0 }));
@@ -79,8 +79,8 @@ export default function DataDiriPage({ onSuccess, onBack }) {
       }, {
         headers: { Authorization: `Bearer ${token}` },
       });
-    } catch { 
-      /* fallback: tetap lanjut walaupun gagal simpan ke backend */ 
+    } catch {
+      /* fallback: tetap lanjut walaupun gagal simpan ke backend */
     } finally {
       setLoading(false);
       onSuccess();
@@ -109,13 +109,13 @@ export default function DataDiriPage({ onSuccess, onBack }) {
 
         <div className="rounded-2xl p-5 mb-5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
           <Field label="Umur" placeholder="contoh: 22" type="number" value={profile.age}
-            onChange={e => setProfile({...profile, age: e.target.value})} />
+            onChange={e => setProfile({ ...profile, age: e.target.value })} />
 
           <div className="mb-4">
             <label className="text-gray-300 text-xs font-semibold mb-1.5 block tracking-wide">Jenis Kelamin</label>
             <div className="flex gap-3">
-              {[{v:"male",l:"Laki-laki",emoji:"👨"},{v:"female",l:"Perempuan",emoji:"👩"}].map(g => (
-                <button key={g.v} onClick={() => setProfile({...profile, gender: g.v})}
+              {[{ v: "male", l: "Laki-laki", emoji: "👨" }, { v: "female", l: "Perempuan", emoji: "👩" }].map(g => (
+                <button key={g.v} onClick={() => setProfile({ ...profile, gender: g.v })}
                   className="flex-1 py-3 rounded-xl font-bold text-sm transition-all"
                   style={{
                     background: profile.gender === g.v ? "rgba(224,48,48,0.15)" : "rgba(255,255,255,0.05)",
@@ -129,15 +129,15 @@ export default function DataDiriPage({ onSuccess, onBack }) {
           </div>
 
           <Field label="Berat Badan (kg)" placeholder="contoh: 65" type="number" value={profile.weight}
-            onChange={e => setProfile({...profile, weight: e.target.value})} />
+            onChange={e => setProfile({ ...profile, weight: e.target.value })} />
           <Field label="Tinggi Badan (cm)" placeholder="contoh: 170" type="number" value={profile.height}
-            onChange={e => setProfile({...profile, height: e.target.value})} />
+            onChange={e => setProfile({ ...profile, height: e.target.value })} />
 
           <div className="mb-4">
             <label className="text-gray-300 text-xs font-semibold mb-1.5 block tracking-wide">Tingkat Aktivitas</label>
             <div className="flex flex-col gap-2">
-              {[{v:"jarang",l:"Jarang Olahraga",d:"Aktivitas fisik ringan / sedentary"},{v:"sedang",l:"Cukup Aktif",d:"Olahraga 3-5x seminggu"},{v:"sering",l:"Sangat Aktif",d:"Olahraga 6-7x seminggu / pekerjaan fisik"}].map(a => (
-                <button key={a.v} onClick={() => setProfile({...profile, activityLevel: a.v})}
+              {[{ v: "jarang", l: "Jarang Olahraga", d: "Aktivitas fisik ringan / sedentary" }, { v: "sedang", l: "Cukup Aktif", d: "Olahraga 3-5x seminggu" }, { v: "sering", l: "Sangat Aktif", d: "Olahraga 6-7x seminggu / pekerjaan fisik" }].map(a => (
+                <button key={a.v} onClick={() => setProfile({ ...profile, activityLevel: a.v })}
                   className="w-full text-left rounded-xl p-3 transition-all"
                   style={{
                     background: profile.activityLevel === a.v ? "rgba(224,48,48,0.15)" : "rgba(255,255,255,0.05)",
@@ -153,15 +153,15 @@ export default function DataDiriPage({ onSuccess, onBack }) {
           <div className="mb-2">
             <label className="text-gray-300 text-xs font-semibold mb-1.5 block tracking-wide">Tujuan Fitness</label>
             <div className="flex gap-2">
-              {[{v:"cutting",l:"Cutting",c:"#1a6ebd",e:"🔥"},{v:"maintenance",l:"Maintain",c:"#8b1a8b",e:"⚖️"},{v:"bulking",l:"Bulking",c:"#e03030",e:"💪"}].map(g => (
-                <button key={g.v} onClick={() => setProfile({...profile, goal: g.v})}
+              {[{ v: "cutting", l: "Cutting", c: "#1a6ebd", e: "🔥" }, { v: "maintenance", l: "Maintain", c: "#8b1a8b", e: "⚖️" }, { v: "bulking", l: "Bulking", c: "#e03030", e: "💪" }].map(g => (
+                <button key={g.v} onClick={() => setProfile({ ...profile, goal: g.v })}
                   className="flex-1 py-3 rounded-xl font-bold text-sm transition-all text-center"
                   style={{
                     background: profile.goal === g.v ? `${g.c}25` : "rgba(255,255,255,0.05)",
                     border: `2px solid ${profile.goal === g.v ? g.c : "rgba(255,255,255,0.1)"}`,
                     color: profile.goal === g.v ? "#fff" : "#666",
                   }}>
-                  {g.e}<br/>{g.l}
+                  {g.e}<br />{g.l}
                 </button>
               ))}
             </div>

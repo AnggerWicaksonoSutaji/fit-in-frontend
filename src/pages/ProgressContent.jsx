@@ -113,8 +113,8 @@ const MonthlyBarChart = ({ days, history, metric, color }) => {
                   background: isToday
                     ? `linear-gradient(180deg, #fff, ${color})`
                     : hoveredIdx === i
-                    ? color
-                    : `${color}60`,
+                      ? color
+                      : `${color}60`,
                   minHeight: 2,
                 }}
               />
@@ -139,9 +139,9 @@ const MonthlyBarChart = ({ days, history, metric, color }) => {
   );
 };
 
-const ProgressContent = ({ stats: propStats, user }) => {
+const ProgressContent = ({ stats: propStats, user, onNavigate }) => {
   const isPremium = localStorage.getItem("fitinPremium") === "true";
-  if (!isPremium) return <LockedPage title="Progress Tracking" emoji="📊" />;
+  if (!isPremium) return <LockedPage title="Progress Tracking" emoji="📊" onNavigate={onNavigate} />;
 
   const stats = propStats || { workouts: 0, calories: 0, streak: 0 };
 
@@ -153,18 +153,18 @@ const ProgressContent = ({ stats: propStats, user }) => {
   const days = getLast30Days();
 
   // Data per hari untuk grafik
-  const sessionsData  = days.map(d => history[d]?.sessions  || 0);
-  const caloriesData  = days.map(d => history[d]?.calories  || 0);
-  const streakData    = days.map(d => history[d]?.streak    || 0);
+  const sessionsData = days.map(d => history[d]?.sessions || 0);
+  const caloriesData = days.map(d => history[d]?.calories || 0);
+  const streakData = days.map(d => history[d]?.streak || 0);
 
   // Nama bulan
   const monthName = new Date().toLocaleDateString("id-ID", { month: "long", year: "numeric" });
 
   const statCards = [
-    { label: "Total Workout",     value: stats.workouts,   unit: "sesi", icon: "🏋️", color: "#e03030", sparkData: sessionsData },
-    { label: "Total Kalori",      value: stats.calories,   unit: "kcal", icon: "🔥", color: "#f97316", sparkData: caloriesData },
-    { label: "Streak Saat Ini",   value: stats.streak,     unit: "hari", icon: "⚡", color: "#a855f7", sparkData: streakData   },
-    { label: "Sesi Hari Ini",     value: stats.todaySessions || 0, unit: "sesi", icon: "📅", color: "#22c55e", sparkData: sessionsData },
+    { label: "Total Workout", value: stats.workouts, unit: "sesi", color: "#e03030", sparkData: sessionsData },
+    { label: "Total Kalori yang terbakar", value: stats.calories, unit: "kcal", color: "#f97316", sparkData: caloriesData },
+    { label: "Streak Saat Ini", value: stats.streak, unit: "hari", color: "#a855f7", sparkData: streakData },
+    { label: "Sesi workout hari ini", value: stats.todaySessions || 0, unit: "sesi", color: "#22c55e", sparkData: sessionsData },
   ];
 
   return (
@@ -186,8 +186,8 @@ const ProgressContent = ({ stats: propStats, user }) => {
               border: `1px solid ${s.color}25`,
             }}
           >
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xl">{s.icon}</span>
+            <div className="flex items-center justify-start gap-2 mb-2 text-left">
+              {s.icon && <span className="text-xl">{s.icon}</span>}
               <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">{s.label}</span>
             </div>
             <div>

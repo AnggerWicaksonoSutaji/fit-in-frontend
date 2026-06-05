@@ -1,5 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
+import logoPng from "./assets/logo.png";
 
 const api = axios.create({
   baseURL: "http://localhost:8000/api",
@@ -8,27 +9,7 @@ const api = axios.create({
 
 /* ── Logo ── */
 const Logo = ({ size = 36 }) => (
-  <svg width={size} height={size} viewBox="0 0 200 200" fill="none">
-    <path d="M15 85 Q35 50 100 45 L85 110 Q50 105 15 85Z" fill="url(#rGp)" opacity="0.9" />
-    <path d="M185 85 Q165 50 100 45 L115 110 Q150 105 185 85Z" fill="url(#bGp)" opacity="0.9" />
-    <path d="M85 110 Q100 170 100 170 Q100 170 115 110 L100 45Z" fill="url(#cGp)" />
-    <ellipse cx="100" cy="82" rx="18" ry="14" fill="url(#eGp)" />
-    <ellipse cx="100" cy="82" rx="9" ry="7" fill="#1a0a0a" />
-    <defs>
-      <linearGradient id="rGp" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stopColor="#ff2020" /><stop offset="100%" stopColor="#c0001a" />
-      </linearGradient>
-      <linearGradient id="bGp" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stopColor="#1a6ebd" /><stop offset="100%" stopColor="#0a3a7a" />
-      </linearGradient>
-      <linearGradient id="cGp" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stopColor="#e03030" /><stop offset="50%" stopColor="#8b1a8b" /><stop offset="100%" stopColor="#1a6ebd" />
-      </linearGradient>
-      <radialGradient id="eGp" cx="50%" cy="40%">
-        <stop offset="0%" stopColor="#ff5555" /><stop offset="100%" stopColor="#cc0000" />
-      </radialGradient>
-    </defs>
-  </svg>
+  <img src={logoPng} alt="Fit-In Logo" style={{ width: size, height: size, objectFit: 'contain' }} className="drop-shadow-lg" />
 );
 
 /* ── Plans ── */
@@ -70,11 +51,11 @@ const plans = [
    PAYMENT PAGE
 ════════════════════════════════════════ */
 export default function Payment({ onBack, onSuccess }) {
-  const [selectedPlan,   setSelectedPlan]   = useState("quarterly");
-  const [step,           setStep]           = useState(1); // 1=pilih, 2=sukses
-  const [loading,        setLoading]        = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState("quarterly");
+  const [step, setStep] = useState(1); // 1=pilih, 2=sukses
+  const [loading, setLoading] = useState(false);
 
-  const plan   = plans.find(p => p.id === selectedPlan);
+  const plan = plans.find(p => p.id === selectedPlan);
 
   const handlePay = async () => {
     setLoading(true);
@@ -103,7 +84,7 @@ export default function Payment({ onBack, onSuccess }) {
       //   onPending: function(result){ ... },
       //   onError: function(result){ ... }
       // });
-      
+
       if (!window.snap) {
         alert("Gagal memproses pembayaran: Script Midtrans tidak ditemukan. Pastikan Anda terhubung ke internet dan tidak menggunakan Ad-Blocker yang memblokir script pembayaran.");
         setLoading(false);
@@ -111,11 +92,11 @@ export default function Payment({ onBack, onSuccess }) {
       }
 
       window.snap.pay(checkoutData.snap_token, {
-        onSuccess: async function() {
+        onSuccess: async function () {
           // Logika ketika pembayaran sukses
           localStorage.setItem("fitinPremium", "true");
           localStorage.setItem("fitinPlan", selectedPlan);
-          
+
           if (checkoutData.user) {
             localStorage.setItem("fitinUser", JSON.stringify(checkoutData.user));
           }
@@ -130,19 +111,19 @@ export default function Payment({ onBack, onSuccess }) {
           } catch (err) {
             console.error("Gagal update status di backend", err);
           }
-          
+
           setStep(2); // Lanjut ke halaman sukses
         },
-        onPending: function(result) {
+        onPending: function (result) {
           // Logika ketika menunggu pembayaran
           console.log("Payment pending:", result);
         },
-        onError: function(result) {
+        onError: function (result) {
           // Logika jika pembayaran gagal
           console.error("Payment error:", result);
           alert("Pembayaran gagal!");
         },
-        onClose: function() {
+        onClose: function () {
           console.log("Customer closed the popup without finishing the payment");
         }
       });
@@ -212,7 +193,7 @@ export default function Payment({ onBack, onSuccess }) {
         </div>
         {/* Step Indicator */}
         <div className="ml-auto flex items-center gap-2">
-          {[1,2].map(s => (
+          {[1, 2].map(s => (
             <div key={s} className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all"
                 style={{

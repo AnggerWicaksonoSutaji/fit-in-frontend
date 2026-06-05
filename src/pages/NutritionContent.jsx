@@ -20,7 +20,7 @@
  * ─────────────────────────────────────────────────
  */
 
-import PremiumUpgradeButton from "../components/PremiumUpgradeButton";
+import LockedPage from "../components/LockedPage";
 
 const NutritionContent = ({ onNavigate }) => {
   // Ambil status premium
@@ -36,8 +36,8 @@ const NutritionContent = ({ onNavigate }) => {
 
   // Label tampilan untuk goal program
   const goalLabel = {
-    cutting:     "Cutting (Defisit)",
-    bulking:     "Bulking (Surplus)",
+    cutting: "Cutting (Defisit)",
+    bulking: "Bulking (Surplus)",
     maintenance: "Maintenance",
   };
 
@@ -82,9 +82,9 @@ const NutritionContent = ({ onNavigate }) => {
         {/* Grid Makronutrien: Protein, Karbohidrat, Lemak */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
           {[
-            { title: "Protein",      value: nutrition.protein + "g", color: "#e03030", emoji: "🥩" },
-            { title: "Karbohidrat",  value: nutrition.carbs + "g",   color: "#1a6ebd", emoji: "🍚" },
-            { title: "Lemak",        value: nutrition.fat + "g",      color: "#8b1a8b", emoji: "🥑" },
+            { title: "Protein", value: nutrition.protein + "g", color: "#e03030", emoji: "🥩" },
+            { title: "Karbohidrat", value: nutrition.carbs + "g", color: "#1a6ebd", emoji: "🍚" },
+            { title: "Lemak", value: nutrition.fat + "g", color: "#8b1a8b", emoji: "🥑" },
           ].map((m) => (
             <div
               key={m.title}
@@ -114,12 +114,12 @@ const NutritionContent = ({ onNavigate }) => {
           <h3 className="text-white font-bold text-sm mb-3">Data Diri Kamu</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
             {[
-              { l: "Umur",      v: profile.age + " thn" },
-              { l: "Gender",    v: profile.gender === "male" ? "Laki-laki" : "Perempuan" },
-              { l: "Berat",     v: profile.weight + " kg" },
-              { l: "Tinggi",    v: profile.height + " cm" },
+              { l: "Umur", v: profile.age + " thn" },
+              { l: "Gender", v: profile.gender === "male" ? "Laki-laki" : "Perempuan" },
+              { l: "Berat", v: profile.weight + " kg" },
+              { l: "Tinggi", v: profile.height + " cm" },
               { l: "Aktivitas", v: profile.activityLevel },
-              { l: "Goal",      v: profile.goal },
+              { l: "Goal", v: profile.goal },
             ].map((d) => (
               <div
                 key={d.l}
@@ -169,28 +169,7 @@ const NutritionContent = ({ onNavigate }) => {
   }
 
   // ── Tampilan Default: Placeholder untuk Pengguna Non-Premium ──
-  return (
-    <div>
-      <h2 className="text-white text-2xl font-black mb-2">Nutrition</h2>
-      <p className="text-gray-500 text-sm mb-6">
-        Panduan nutrisi untuk mendukung program fitness kamu
-      </p>
-      <div
-        className="mt-5 p-5 rounded-2xl text-center"
-        style={{
-          background: "rgba(255,255,255,0.03)",
-          border: "1px solid rgba(255,255,255,0.08)",
-        }}
-      >
-        <div className="text-3xl mb-2">🔒</div>
-        <p className="text-gray-400 text-sm mb-3">
-          Meal plan harian dan kalkulasi kalori tersedia di Premium
-        </p>
-        {/* Tombol upgrade reusable */}
-        <PremiumUpgradeButton onNavigate={onNavigate} />
-      </div>
-    </div>
-  );
+  return <LockedPage title="Nutrition & Meal Plan" emoji="🍎" onNavigate={onNavigate} />;
 };
 
 export default NutritionContent;

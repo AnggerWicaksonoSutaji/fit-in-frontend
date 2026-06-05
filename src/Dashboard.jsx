@@ -1,5 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
+import axios from "axios";
 import { navItems } from "./data/navItems";
+import { schedules } from "./data/schedules";
 import Sidebar from "./components/Sidebar";
 import UpgradePopup from "./components/UpgradePopup";
 
@@ -24,7 +26,11 @@ export default function Dashboard({ onLogout, onNavigate }) {
   const [showPopup, setShowPopup] = useState(!isPremium);
   const [selectedVideoCategory, setSelectedVideoCategory] = useState(null);
 
-  const user = JSON.parse(localStorage.getItem("fitinUser") || '{"name":"Athlete"}');
+  let user = { name: "Athlete" };
+  try {
+    const rawUser = localStorage.getItem("fitinUser");
+    if (rawUser && rawUser !== "undefined") user = JSON.parse(rawUser);
+  } catch (e) { }
   // Pastikan userId selalu valid — gunakan id, fallback ke email, lalu ke name
   const userId = user?.id || user?.email || user?.name || "guest";
 
@@ -61,15 +67,18 @@ export default function Dashboard({ onLogout, onNavigate }) {
   const [workoutSeconds, setWorkoutSeconds] = useState(0);
   const [isWorkoutActive, setIsWorkoutActive] = useState(false);
   const [showCelebrationModal, setShowCelebrationModal] = useState(false);
+  const [showStartWorkoutModal, setShowStartWorkoutModal] = useState(false);
   const [caloriesBurned, setCaloriesBurned] = useState(0);
   const timerRef = useRef(null);
 
   const [stats, setStats] = useState(() => {
     const raw = localStorage.getItem(`fitinStats_${userId}`);
-    const parsed = raw ? JSON.parse(raw) : { workouts: 0, calories: 0, streak: 0 };
+    let parsed = { workouts: 0, calories: 0, streak: 0 };
+    try { if (raw && raw !== "undefined") parsed = JSON.parse(raw); } catch (e) { }
 
     // ── Reset harian: cek apakah lastWorkoutDate adalah hari ini ──
-    const todayStr = new Date().toISOString().slice(0, 10);
+    const d = new Date();
+    const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     const lastDate = localStorage.getItem(`fitinLastWorkoutDate_${userId}`);
 
     let streak = parsed.streak;
@@ -77,7 +86,7 @@ export default function Dashboard({ onLogout, onNavigate }) {
     if (lastDate) {
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayStr = yesterday.toISOString().slice(0, 10);
+      const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
       if (lastDate !== todayStr && lastDate !== yesterdayStr) {
         streak = 0;
         const updated = { ...parsed, streak: 0, todaySessions: 0, todayCalories: 0 };
@@ -95,6 +104,89 @@ export default function Dashboard({ onLogout, onNavigate }) {
 
     return { ...parsed, streak };
   });
+
+  // Reset display if day changes while app is open
+  useEffect(() => {
+    const d = new Date();
+    const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const lastDate = localStorage.getItem(`fitinLastWorkoutDate_${userId}`);
+    if (lastDate && lastDate !== todayStr && (stats.todaySessions > 0 || stats.todayCalories > 0)) {
+      setStats(prev => {
+        const updated = { ...prev, todaySessions: 0, todayCalories: 0 };
+        localStorage.setItem(`fitinStats_${userId}`, JSON.stringify(updated));
+        return updated;
+      });
+    }
+  }, [active, userId, stats.todaySessions, stats.todayCalories]);
+
+  const syncStatsToBackend = async (newStats) => {
+    try {
+      const token = localStorage.getItem("fitinToken");
+      if (!token) return;
+      const lastDate = localStorage.getItem(`fitinLastWorkoutDate_${userId}`);
+      const rawHistory = localStorage.getItem(`fitinDailyHistory_${userId}`);
+      const history = rawHistory ? JSON.parse(rawHistory) : {};
+
+      await axios.post(
+        "http://127.0.0.1:8000/api/user/sync-stats",
+        {
+          workouts: newStats.workouts || 0,
+          calories: newStats.calories || 0,
+          streak: newStats.streak || 0,
+          today_sessions: newStats.todaySessions || 0,
+          today_calories: newStats.todayCalories || 0,
+          last_workout_date: lastDate || null,
+          daily_history: history
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+    } catch (err) {
+      console.error("Failed to sync stats to backend:", err);
+    }
+  };
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const token = localStorage.getItem("fitinToken");
+        if (!token) return;
+        const res = await axios.get("http://127.0.0.1:8000/api/user/sync-stats", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = res.data;
+        if (data && data.workouts !== undefined) {
+          const localRaw = localStorage.getItem(`fitinStats_${userId}`);
+          let localStats = { workouts: 0, calories: 0, streak: 0, todaySessions: 0, todayCalories: 0 };
+          try { if (localRaw && localRaw !== "undefined") localStats = JSON.parse(localRaw); } catch (e) {}
+
+          // Jika backend kosong tapi lokal ada datanya (migrasi pertama kali), push lokal ke backend
+          if (data.workouts === 0 && data.calories === 0 && (localStats.workouts > 0 || localStats.calories > 0)) {
+            syncStatsToBackend(localStats);
+            return;
+          }
+
+          const updatedStats = {
+            workouts: data.workouts,
+            calories: data.calories,
+            streak: data.streak,
+            todaySessions: data.today_sessions,
+            todayCalories: data.today_calories
+          };
+          setStats(updatedStats);
+          localStorage.setItem(`fitinStats_${userId}`, JSON.stringify(updatedStats));
+          if (data.last_workout_date) {
+            localStorage.setItem(`fitinLastWorkoutDate_${userId}`, data.last_workout_date);
+          }
+          if (data.daily_history) {
+            localStorage.setItem(`fitinDailyHistory_${userId}`, JSON.stringify(data.daily_history));
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch stats from backend:", err);
+      }
+    };
+    fetchStats();
+  }, [userId]);
 
   const [showStreakPopup, setShowStreakPopup] = useState(false);
   const [newStreakCount, setNewStreakCount] = useState(0);
@@ -138,8 +230,39 @@ export default function Dashboard({ onLogout, onNavigate }) {
     };
   };
 
-  const beratBadan = 70; // Mock kg
-  const MET = 6.0;
+  const rawProfile = localStorage.getItem("fitinProfile");
+  const profileObj = rawProfile ? JSON.parse(rawProfile) : {};
+  const beratBadan = parseFloat(profileObj?.weight) || 70;
+  
+  const MET = useMemo(() => {
+    const userGoal = (typeof profileObj?.goal === 'string' && profileObj.goal) ? profileObj.goal.toLowerCase() : "maintenance";
+    const dToday = new Date();
+    const dateStr = `${dToday.getFullYear()}-${String(dToday.getMonth() + 1).padStart(2, '0')}-${String(dToday.getDate()).padStart(2, '0')}`;
+    const dayIndex = (dToday.getDay() + 6) % 7;
+
+    const rawCustom = localStorage.getItem("fitinCustomSchedules");
+    let customSchedules = {};
+    try { if (rawCustom && rawCustom !== "undefined") customSchedules = JSON.parse(rawCustom); } catch (e) { }
+
+    const rawWeekly = localStorage.getItem("fitinWeeklySchedules");
+    let weeklySchedules = {};
+    try { if (rawWeekly && rawWeekly !== "undefined") weeklySchedules = JSON.parse(rawWeekly); } catch (e) { }
+
+    const baseRoutine = (schedules[userGoal] || schedules.maintenance)[dayIndex];
+    const defaultRoutine = weeklySchedules[dayIndex] ? { ...baseRoutine, ...weeklySchedules[dayIndex] } : baseRoutine;
+    const todayRoutine = customSchedules[dateStr] || defaultRoutine || { focus: "Rest Day" };
+    const focusLower = todayRoutine.focus.toLowerCase();
+
+    if (focusLower.includes("hiit") || focusLower.includes("cardio") || focusLower.includes("sprint") || focusLower.includes("run")) {
+      return 8.0;
+    } else if (focusLower.includes("yoga") || focusLower.includes("stretch") || focusLower.includes("recovery")) {
+      return 3.0;
+    } else if (focusLower.includes("rest")) {
+      return 1.0;
+    } else {
+      return 6.0; // Default untuk latihan beban, upper body, lower body, dll.
+    }
+  }, [active]); // Re-calculate saat ganti tab untuk merespon perubahan schedule
 
   useEffect(() => {
     if (isWorkoutActive) {
@@ -152,13 +275,19 @@ export default function Dashboard({ onLogout, onNavigate }) {
     return () => clearInterval(timerRef.current);
   }, [isWorkoutActive]);
 
-  const startGlobalWorkout = () => {
+  const requestGlobalWorkout = () => {
+    setShowStartWorkoutModal(true);
+  };
+
+  const confirmStartGlobalWorkout = () => {
     setWorkoutSeconds(0);
     setIsWorkoutActive(true);
     setShowCelebrationModal(false);
+    setShowStartWorkoutModal(false);
 
     // ── Logika Streak: tambah 1x per hari ──
-    const todayStr = new Date().toISOString().slice(0, 10);
+    const d = new Date();
+    const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     const lastDate = localStorage.getItem(`fitinLastWorkoutDate_${userId}`);
 
     if (lastDate !== todayStr) {
@@ -166,228 +295,303 @@ export default function Dashboard({ onLogout, onNavigate }) {
       localStorage.setItem(`fitinLastWorkoutDate_${userId}`, todayStr);
       setStats((prev) => {
         const newStreak = prev.streak + 1;
-        const updated = { ...prev, streak: newStreak };
+        const updated = { ...prev, streak: newStreak, todaySessions: 0, todayCalories: 0 };
         localStorage.setItem(`fitinStats_${userId}`, JSON.stringify(updated));
         setNewStreakCount(newStreak);
         setShowStreakPopup(true);
         // Auto-hide popup setelah 3 detik
         setTimeout(() => setShowStreakPopup(false), 3000);
+        syncStatsToBackend(updated);
         return updated;
       });
     }
   };
 
-  const handleEndGlobalWorkout = () => {
-    setIsWorkoutActive(false);
-    clearInterval(timerRef.current);
+    const triggerStreakOnly = () => {
+      const d = new Date();
+      const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const lastDate = localStorage.getItem(`fitinLastWorkoutDate_${userId}`);
 
-    const minutes = workoutSeconds / 60;
-    const calories = ((MET * 3.5 * beratBadan) / 200) * minutes;
-    setCaloriesBurned(calories);
-    setShowCelebrationModal(true);
+      if (lastDate !== todayStr) {
+        localStorage.setItem(`fitinLastWorkoutDate_${userId}`, todayStr);
+        setStats((prev) => {
+          const newStreak = prev.streak + 1;
+          const updated = { ...prev, streak: newStreak, todaySessions: 0, todayCalories: 0 };
+          localStorage.setItem(`fitinStats_${userId}`, JSON.stringify(updated));
+          setNewStreakCount(newStreak);
+          setShowStreakPopup(true);
+          setTimeout(() => setShowStreakPopup(false), 3000);
+          syncStatsToBackend(updated);
+          return updated;
+        });
+      }
+    };
 
-    const todayStr = new Date().toISOString().slice(0, 10);
+    const handleEndGlobalWorkout = () => {
+      setIsWorkoutActive(false);
+      clearInterval(timerRef.current);
 
-    setStats((prev) => {
-      const newStats = {
-        ...prev,
-        workouts: prev.workouts + 1,
-        calories: Math.round(prev.calories + calories),
-        todaySessions: (prev.todaySessions || 0) + 1,
-        todayCalories: Math.round((prev.todayCalories || 0) + calories),
-      };
-      localStorage.setItem(`fitinStats_${userId}`, JSON.stringify(newStats));
+      const minutes = workoutSeconds / 60;
+      const calories = ((MET * 3.5 * beratBadan) / 200) * minutes;
+      setCaloriesBurned(calories);
+      setShowCelebrationModal(true);
 
-      // ── Simpan history harian untuk grafik bulanan ──
-      const rawHistory = localStorage.getItem(`fitinDailyHistory_${userId}`);
-      const history = rawHistory ? JSON.parse(rawHistory) : {};
-      history[todayStr] = {
-        sessions: newStats.todaySessions,
-        calories: newStats.todayCalories,
-        streak: newStats.streak,
-      };
-      // Batasi hanya simpan 90 hari terakhir
-      const sortedKeys = Object.keys(history).sort().slice(-90);
-      const trimmed = {};
-      sortedKeys.forEach(k => { trimmed[k] = history[k]; });
-      localStorage.setItem(`fitinDailyHistory_${userId}`, JSON.stringify(trimmed));
+      const d = new Date();
+      const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
-      return newStats;
-    });
-  };
+      setStats((prev) => {
+        const newStats = {
+          ...prev,
+          workouts: prev.workouts + 1,
+          calories: Math.round(prev.calories + calories),
+          todaySessions: (prev.todaySessions || 0) + 1,
+          todayCalories: Math.round((prev.todayCalories || 0) + calories),
+        };
+        localStorage.setItem(`fitinStats_${userId}`, JSON.stringify(newStats));
 
-  const formatTime = (totalSeconds) => {
-    const m = Math.floor(totalSeconds / 60).toString().padStart(2, "0");
-    const s = (totalSeconds % 60).toString().padStart(2, "0");
-    return `${m}:${s}`;
-  };
+        // ── Simpan history harian untuk grafik bulanan ──
+        const rawHistory = localStorage.getItem(`fitinDailyHistory_${userId}`);
+        const history = rawHistory ? JSON.parse(rawHistory) : {};
+        history[todayStr] = {
+          sessions: newStats.todaySessions,
+          calories: newStats.todayCalories,
+          streak: newStats.streak,
+        };
+        // Batasi hanya simpan 90 hari terakhir
+        const sortedKeys = Object.keys(history).sort().slice(-90);
+        const trimmed = {};
+        sortedKeys.forEach(k => { trimmed[k] = history[k]; });
+        localStorage.setItem(`fitinDailyHistory_${userId}`, JSON.stringify(trimmed));
+        syncStatsToBackend(newStats);
+        return newStats;
+      });
+    };
 
-  const renderContent = () => {
-    switch (active) {
-      case "home": return <HomeContent
-        user={user}
-        onNavigate={onNavigate}
-        setActive={setActive}
-        setSelectedVideoCategory={setSelectedVideoCategory}
-        startGlobalWorkout={startGlobalWorkout}
-        isWorkoutActive={isWorkoutActive}
-        workoutSeconds={workoutSeconds}
-        liveCalories={((MET * 3.5 * beratBadan) / 200) * (workoutSeconds / 60)}
-        stats={stats}
-      />;
-      case "workout": return <WorkoutContent onNavigate={onNavigate} setActive={setActive} />;
-      case "video": return <VideoContent initialCategory={selectedVideoCategory} onClearCategory={() => setSelectedVideoCategory(null)} />;
-      case "nutrition": return <NutritionContent onNavigate={onNavigate} />;
-      case "bmi": return <BMIContent />;
-      case "progress": return <ProgressContent stats={stats} user={user} />;
-      case "schedule": return <ScheduleContent />;
-      case "profile": return <ProfileContent onLogout={onLogout} onNavigate={onNavigate} />;
-      default: return <HomeContent
-        user={user}
-        onNavigate={onNavigate}
-        setActive={setActive}
-        setSelectedVideoCategory={setSelectedVideoCategory}
-        startGlobalWorkout={startGlobalWorkout}
-        isWorkoutActive={isWorkoutActive}
-        workoutSeconds={workoutSeconds}
-        liveCalories={((MET * 3.5 * beratBadan) / 200) * (workoutSeconds / 60)}
-        stats={stats}
-      />;
-    }
-  };
+    const formatTime = (totalSeconds) => {
+      const m = Math.floor(totalSeconds / 60).toString().padStart(2, "0");
+      const s = (totalSeconds % 60).toString().padStart(2, "0");
+      return `${m}:${s}`;
+    };
 
-  return (
-    <div className="flex min-h-screen" style={{ background: "#0a0a0a", fontFamily: "'Trebuchet MS', sans-serif" }}>
+    const renderContent = () => {
+      switch (active) {
+        case "home": return <HomeContent
+          user={user}
+          onNavigate={onNavigate}
+          setActive={setActive}
+          setSelectedVideoCategory={setSelectedVideoCategory}
+          startGlobalWorkout={requestGlobalWorkout}
+          isWorkoutActive={isWorkoutActive}
+          workoutSeconds={workoutSeconds}
+          liveCalories={((MET * 3.5 * beratBadan) / 200) * (workoutSeconds / 60)}
+          stats={stats}
+          triggerStreak={triggerStreakOnly}
+        />;
+        case "workout": return <WorkoutContent onNavigate={onNavigate} setActive={setActive} />;
+        case "video": return <VideoContent initialCategory={selectedVideoCategory} onClearCategory={() => setSelectedVideoCategory(null)} triggerStreak={triggerStreakOnly} />;
+        case "nutrition": return <NutritionContent onNavigate={onNavigate} />;
+        case "bmi": return <BMIContent />;
+        case "progress": return <ProgressContent stats={stats} user={user} onNavigate={onNavigate} />;
+        case "schedule": return <ScheduleContent onNavigate={onNavigate} />;
+        case "profile": return <ProfileContent onLogout={onLogout} onNavigate={onNavigate} />;
+        default: return <HomeContent
+          user={user}
+          onNavigate={onNavigate}
+          setActive={setActive}
+          setSelectedVideoCategory={setSelectedVideoCategory}
+          startGlobalWorkout={requestGlobalWorkout}
+          isWorkoutActive={isWorkoutActive}
+          workoutSeconds={workoutSeconds}
+          liveCalories={((MET * 3.5 * beratBadan) / 200) * (workoutSeconds / 60)}
+          stats={stats}
+          triggerStreak={triggerStreakOnly}
+        />;
+      }
+    };
 
-      {showPopup && (
-        <UpgradePopup
-          onClose={() => setShowPopup(false)}
-          onUpgrade={handleUpgrade}
-        />
-      )}
+    return (
+      <div className="flex min-h-screen" style={{ background: "#0a0a0a", fontFamily: "'Trebuchet MS', sans-serif" }}>
 
-      {/* ── Streak Notification Popup ── */}
-      {showStreakPopup && (
-        <div
-          className="fixed top-6 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-4 px-6 py-4 rounded-2xl shadow-2xl"
-          style={{
-            background: "linear-gradient(135deg, #7c3aed, #4f46e5)",
-            border: "1px solid rgba(167,139,250,0.4)",
-            boxShadow: "0 8px 40px rgba(124,58,237,0.5)",
-            animation: "slideDown 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)"
-          }}
-        >
-          <style>{`
+        {showPopup && (
+          <UpgradePopup
+            onClose={() => setShowPopup(false)}
+            onUpgrade={handleUpgrade}
+          />
+        )}
+
+        {/* ── Streak Notification Popup ── */}
+        {showStreakPopup && (
+          <div
+            className="fixed top-6 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-4 px-6 py-4 rounded-2xl shadow-2xl"
+            style={{
+              background: "linear-gradient(135deg, #7c3aed, #4f46e5)",
+              border: "1px solid rgba(167,139,250,0.4)",
+              boxShadow: "0 8px 40px rgba(124,58,237,0.5)",
+              animation: "slideDown 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)"
+            }}
+          >
+            <style>{`
             @keyframes slideDown {
               from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
               to   { opacity: 1; transform: translateX(-50%) translateY(0); }
             }
           `}</style>
-          <div className="text-4xl">🔥</div>
-          <div>
-            <p className="text-purple-200 text-[10px] font-bold uppercase tracking-widest">Streak Meningkat!</p>
-            <p className="text-white text-xl font-black">{newStreakCount} Hari Berturut-turut</p>
-            <p className="text-purple-300 text-xs mt-0.5">Pertahankan semangat latihan kamu!</p>
+            <div className="text-4xl">🔥</div>
+            <div>
+              <p className="text-purple-200 text-[10px] font-bold uppercase tracking-widest">Streak Meningkat!</p>
+              <p className="text-white text-xl font-black">{newStreakCount} Hari Berturut-turut</p>
+              <p className="text-purple-300 text-xs mt-0.5">Pertahankan semangat latihan kamu!</p>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      <Sidebar
-        active={active}
-        setActive={setActive}
-        collapsed={collapsed}
-        setCollapsed={setCollapsed}
-        onLogout={onLogout}
-        onNavigate={onNavigate}
-        isPremium={isPremium}
-      />
+        <Sidebar
+          active={active}
+          setActive={setActive}
+          collapsed={collapsed}
+          setCollapsed={setCollapsed}
+          onLogout={onLogout}
+          onNavigate={onNavigate}
+          isPremium={isPremium}
+        />
 
-      <main className="flex-1 overflow-y-auto">
-        <div className="sticky top-0 z-20 flex items-center justify-between px-6 py-4"
-          style={{ background: "rgba(10,10,10,0.9)", backdropFilter: "blur(12px)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-          <h1 className="text-white font-bold text-lg capitalize">
-            {navItems.find(n => n.key === active)?.label || "Dashboard"}
-          </h1>
-          <div className="flex items-center gap-3">
-            {!isPremium ? (
+        <main className="flex-1 overflow-y-auto">
+          <div className="sticky top-0 z-20 flex items-center justify-between px-6 py-4"
+            style={{ background: "rgba(10,10,10,0.9)", backdropFilter: "blur(12px)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+            <div className="flex items-center gap-4">
               <button
-                onClick={() => { setShowPopup(false); onNavigate("payment"); }}
-                className="px-4 py-2 rounded-lg text-xs font-bold text-yellow-400 transition-all hover:brightness-110"
-                style={{ background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.3)" }}>
-                ⭐ Upgrade
+                onClick={() => setCollapsed(!collapsed)}
+                className="text-gray-400 hover:text-white transition-colors p-1"
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  {collapsed ? (
+                    <>
+                      <path d="M3 12h18" />
+                      <path d="M3 6h18" />
+                      <path d="M3 18h18" />
+                    </>
+                  ) : (
+                    <>
+                      <path d="M18 6L6 18" />
+                      <path d="M6 6l12 12" />
+                    </>
+                  )}
+                </svg>
               </button>
-            ) : (
-              <span className="px-3 py-1.5 rounded-lg text-xs font-bold text-yellow-400"
-                style={{ background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.3)" }}>
-                ⭐ Premium
-              </span>
-            )}
-            <button className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold cursor-pointer transition-transform hover:scale-110"
-              style={{ background: "linear-gradient(135deg,#e03030,#1a6ebd)", border: "none" }}
-              onClick={() => setActive("profile")}>
-              {user?.name?.[0]?.toUpperCase() || "A"}
+              <h1 className="text-white font-bold text-lg capitalize">
+                {navItems.find(n => n.key === active)?.label || "Dashboard"}
+              </h1>
+            </div>
+            <div className="flex items-center gap-3">
+              {!isPremium ? (
+                <button
+                  onClick={() => { setShowPopup(false); onNavigate("payment"); }}
+                  className="px-4 py-2 rounded-lg text-xs font-bold text-yellow-400 transition-all hover:brightness-110"
+                  style={{ background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.3)" }}>
+                  ⭐ Upgrade
+                </button>
+              ) : (
+                <span className="px-3 py-1.5 rounded-lg text-xs font-bold text-yellow-400"
+                  style={{ background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.3)" }}>
+                  ⭐ Premium
+                </span>
+              )}
+              <button className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold cursor-pointer transition-transform hover:scale-110"
+                style={{ background: "linear-gradient(135deg,#e03030,#1a6ebd)", border: "none" }}
+                onClick={() => setActive("profile")}>
+                {user?.name?.[0]?.toUpperCase() || "A"}
+              </button>
+            </div>
+          </div>
+          <div className="p-6">{renderContent()}</div>
+        </main>
+
+        {/* ── Floating Timer Widget ── */}
+        {isWorkoutActive && (
+          <div
+            className="fixed bottom-8 right-8 z-40 bg-black/80 backdrop-blur-md border border-red-500/30 p-4 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.5)] flex items-center gap-6 select-none"
+            style={{
+              transform: `translate(${timerPos.x}px, ${timerPos.y}px)`,
+              cursor: isDragging ? "grabbing" : "grab",
+              touchAction: "none" // Mencegah scroll di perangkat sentuh saat dragging
+            }}
+            onPointerDown={handlePointerDown}
+          >
+            <div>
+              <p className="text-red-400 text-[10px] font-bold uppercase tracking-widest mb-1">Workout Active</p>
+              <p className="text-white text-3xl font-black tabular-nums tracking-tighter">{formatTime(workoutSeconds)}</p>
+            </div>
+            <button
+              onClick={handleEndGlobalWorkout}
+              className="px-5 py-3 rounded-xl font-bold text-white text-sm transition-all hover:scale-105 active:scale-95 shadow-lg shadow-red-500/20"
+              style={{ background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)" }}
+            >
+              ⏹ Akhiri
             </button>
           </div>
-        </div>
-        <div className="p-6">{renderContent()}</div>
-      </main>
+        )}
 
-      {/* ── Floating Timer Widget ── */}
-      {isWorkoutActive && (
-        <div
-          className="fixed bottom-8 right-8 z-40 bg-black/80 backdrop-blur-md border border-red-500/30 p-4 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.5)] flex items-center gap-6 select-none"
-          style={{
-            transform: `translate(${timerPos.x}px, ${timerPos.y}px)`,
-            cursor: isDragging ? "grabbing" : "grab",
-            touchAction: "none" // Mencegah scroll di perangkat sentuh saat dragging
-          }}
-          onPointerDown={handlePointerDown}
-        >
-          <div>
-            <p className="text-red-400 text-[10px] font-bold uppercase tracking-widest mb-1">Workout Active</p>
-            <p className="text-white text-3xl font-black tabular-nums tracking-tighter">{formatTime(workoutSeconds)}</p>
-          </div>
-          <button
-            onClick={handleEndGlobalWorkout}
-            className="px-5 py-3 rounded-xl font-bold text-white text-sm transition-all hover:scale-105 active:scale-95 shadow-lg shadow-red-500/20"
-            style={{ background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)" }}
-          >
-            ⏹ Akhiri
-          </button>
-        </div>
-      )}
-
-      {/* ── Global Celebration Modal ── */}
-      {showCelebrationModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-md transition-opacity"></div>
-
-          <div className="relative bg-[#1a1a1a] border border-white/10 p-8 rounded-[2rem] max-w-md w-full text-center shadow-[0_0_80px_rgba(239,68,68,0.3)] transform transition-all duration-500 scale-100 opacity-100 animate-[bounce_1s_ease-in-out]">
-            <div className="text-8xl mb-6 animate-bounce">🎉</div>
-            <h2 className="text-3xl font-black text-white mb-2">Kamu Luar Biasa!</h2>
-            <p className="text-gray-400 text-sm mb-8">Sesi workout telah selesai. Ini adalah pencapaianmu hari ini:</p>
-
-            <div className="flex justify-center gap-4 mb-8">
-              <div className="bg-white/5 p-4 rounded-2xl border border-white/5 flex-1">
-                <p className="text-gray-500 text-xs font-bold uppercase mb-2 tracking-widest">Waktu</p>
-                <p className="text-3xl font-black text-white">{formatTime(workoutSeconds)}</p>
-              </div>
-              <div className="bg-red-500/10 p-4 rounded-2xl border border-red-500/20 flex-1">
-                <p className="text-red-400/80 text-xs font-bold uppercase mb-2 tracking-widest">Kalori di bakar:</p>
-                <p className="text-3xl font-black text-red-400">{caloriesBurned.toFixed(1)} <span className="text-sm font-medium">kcal</span></p>
+        {/* ── Start Workout Modal ── */}
+        {showStartWorkoutModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-md transition-opacity"></div>
+            <div className="relative bg-[#1a1a1a] border border-white/10 p-8 rounded-[2rem] max-w-sm w-full text-center shadow-[0_0_80px_rgba(239,68,68,0.2)] transform transition-all duration-300 scale-100 opacity-100">
+              <div className="text-7xl mb-4 animate-pulse">🔥</div>
+              <h2 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-fuchsia-500 mb-2">
+                Workout Dimulai!
+              </h2>
+              <p className="text-gray-400 text-sm mb-6 leading-relaxed">
+                Apakah Anda siap? Waktu dan pembakaran kalori akan dimulai saat Anda menekan tombol mulai.
+              </p>
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setShowStartWorkoutModal(false)}
+                  className="flex-1 py-4 bg-[#2a2a35] text-white rounded-xl font-bold hover:bg-[#3a3a45] active:scale-95 transition-all cursor-pointer border border-white/10"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={confirmStartGlobalWorkout}
+                  className="flex-1 py-4 bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-xl font-bold hover:brightness-110 active:scale-95 transition-all cursor-pointer shadow-lg shadow-red-500/30"
+                >
+                  Mulai! 🚀
+                </button>
               </div>
             </div>
-
-            <button
-              onClick={() => setShowCelebrationModal(false)}
-              className="w-full py-4 rounded-xl font-bold text-white text-sm transition-all hover:bg-white/10 hover:scale-105 active:scale-95"
-              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}
-            >
-              Tutup & Kembali
-            </button>
           </div>
-        </div>
-      )}
-    </div>
-  );
+        )}
+
+        {/* ── Global Celebration Modal ── */}
+        {showCelebrationModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-md transition-opacity"></div>
+
+            <div className="relative bg-[#1a1a1a] border border-white/10 p-8 rounded-[2rem] max-w-md w-full text-center shadow-[0_0_80px_rgba(239,68,68,0.3)] transform transition-all duration-500 scale-100 opacity-100 animate-[bounce_1s_ease-in-out]">
+              <div className="text-8xl mb-6 animate-bounce">🎉</div>
+              <h2 className="text-3xl font-black text-white mb-2">Kamu Luar Biasa!</h2>
+              <p className="text-gray-400 text-sm mb-8">Sesi workout telah selesai. Ini adalah pencapaianmu hari ini:</p>
+
+              <div className="flex justify-center gap-4 mb-8">
+                <div className="bg-white/5 p-4 rounded-2xl border border-white/5 flex-1">
+                  <p className="text-gray-500 text-xs font-bold uppercase mb-2 tracking-widest">Waktu</p>
+                  <p className="text-3xl font-black text-white">{formatTime(workoutSeconds)}</p>
+                </div>
+                <div className="bg-red-500/10 p-4 rounded-2xl border border-red-500/20 flex-1">
+                  <p className="text-red-400/80 text-xs font-bold uppercase mb-2 tracking-widest">Kalori di bakar:</p>
+                  <p className="text-3xl font-black text-red-400">{caloriesBurned.toFixed(1)} <span className="text-sm font-medium">kcal</span></p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowCelebrationModal(false)}
+                className="w-full py-4 rounded-xl font-bold text-white text-sm transition-all hover:bg-white/10 hover:scale-105 active:scale-95"
+                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}
+              >
+                Tutup & Kembali
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
 }

@@ -91,14 +91,14 @@ const VideoCard = ({ video, onClick }) => (
               video.level === "Beginner"
                 ? "rgba(34,197,94,0.15)"
                 : video.level === "Intermediate"
-                ? "rgba(251,191,36,0.15)"
-                : "rgba(239,68,68,0.15)",
+                  ? "rgba(251,191,36,0.15)"
+                  : "rgba(239,68,68,0.15)",
             color:
               video.level === "Beginner"
                 ? "#4ade80"
                 : video.level === "Intermediate"
-                ? "#fbbf24"
-                : "#f87171",
+                  ? "#fbbf24"
+                  : "#f87171",
           }}
         >
           {video.level}

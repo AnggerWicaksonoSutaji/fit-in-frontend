@@ -5,7 +5,7 @@
  * Digunakan di halaman VideoContent dan HomeContent (preview).
  *
  * Menampilkan:
- *   - Area thumbnail dengan emoji
+ *   - Area thumbnail dengan SVG icon berdasarkan judul kategori
  *   - Overlay gembok jika konten terkunci (premium)
  *   - Overlay tombol play jika konten bebas
  *   - Info: judul, durasi, dan level kesulitan
@@ -13,13 +13,97 @@
  * Props:
  *   - video (object) : Objek data kategori dari workoutCategories.js
  *     - title    (string)  : Judul kategori
- *     - thumb    (string)  : Emoji thumbnail
  *     - locked   (boolean) : Status premium
  *     - duration (string)  : Durasi estimasi (opsional)
  *     - level    (string)  : Tingkat kesulitan
  *   - onClick (function) : Callback saat card diklik (hanya jika tidak terkunci)
  * ─────────────────────────────────────────────────
  */
+
+/**
+ * CategoryIcon — Mengembalikan SVG icon sesuai judul kategori.
+ * Menggantikan emoji agar tampilan lebih konsisten dan profesional.
+ */
+const CategoryIcon = ({ title, size = 48, color = "#ffffff" }) => {
+  const t = (title || "").toLowerCase();
+
+  // Full Body Workout — ikon orang berlari
+  if (t.includes("full body") || t.includes("full")) {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="4" r="2" />
+        <path d="M15.09 8.26A2 2 0 0 0 13.26 7h-2.52A2 2 0 0 0 8.91 8.26L7 14h2l1 6h4l1-6h2z" />
+        <path d="M7 14l-2 3" />
+        <path d="M17 14l2 3" />
+      </svg>
+    );
+  }
+
+  // Upper Body Strength — ikon dumbbell / angkat beban
+  if (t.includes("upper")) {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M6 4v16" />
+        <path d="M18 4v16" />
+        <path d="M4 7h4" />
+        <path d="M16 7h4" />
+        <path d="M4 17h4" />
+        <path d="M16 17h4" />
+        <path d="M8 12h8" />
+      </svg>
+    );
+  }
+
+  // HIIT Cardio — ikon detak jantung / zigzag
+  if (t.includes("hiit") || t.includes("cardio")) {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+      </svg>
+    );
+  }
+
+  // Core & Abs — ikon target / inti
+  if (t.includes("core") || t.includes("abs")) {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <circle cx="12" cy="12" r="6" />
+        <circle cx="12" cy="12" r="2" />
+      </svg>
+    );
+  }
+
+  // Leg Day — ikon arah panah ke bawah / kaki
+  if (t.includes("leg") || t.includes("lower")) {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M10 2v10l-3 9" />
+        <path d="M14 2v10l3 9" />
+        <path d="M10 8h4" />
+      </svg>
+    );
+  }
+
+  // Yoga & Stretching — ikon orang meditasi
+  if (t.includes("yoga") || t.includes("stretch") || t.includes("recovery")) {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="4" r="2" />
+        <path d="M12 6v5" />
+        <path d="M7 9c1.5 0 3.5 1 5 1s3.5-1 5-1" />
+        <path d="M9 20l3-9 3 9" />
+      </svg>
+    );
+  }
+
+  // Default fallback — ikon bintang/bintang olahraga
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </svg>
+  );
+};
 
 const VideoCard = ({ video, onClick }) => (
   <div
@@ -34,15 +118,31 @@ const VideoCard = ({ video, onClick }) => (
     {/* ── Area Thumbnail ── */}
     <div
       className="relative h-36 flex items-center justify-center text-5xl"
-      style={{ background: "linear-gradient(135deg, #1a1a2e, #16213e)" }}
+      style={
+        video.image
+          ? {
+              backgroundImage: `url(${video.image})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundRepeat: "no-repeat",
+            }
+          : { background: "linear-gradient(135deg, #1a1a2e, #16213e)" }
+      }
     >
-      {/* Emoji thumbnail */}
-      <span>{video.thumb}</span>
+      {/* Overlay gelap di atas foto agar icon & teks tetap terbaca */}
+      {video.image && (
+        <div
+          className="absolute inset-0"
+          style={{ background: "rgba(0,0,0,0.40)" }}
+        />
+      )}
+
+
 
       {/* Overlay PREMIUM jika video terkunci */}
       {video.locked && (
         <div
-          className="absolute inset-0 flex flex-col items-center justify-center"
+          className="absolute inset-0 flex flex-col items-center justify-center z-20"
           style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
         >
           {/* Icon gembok */}
@@ -57,7 +157,7 @@ const VideoCard = ({ video, onClick }) => (
       {/* Overlay tombol PLAY jika video tidak terkunci */}
       {!video.locked && (
         <div
-          className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
+          className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity z-20"
           style={{ background: "rgba(0,0,0,0.5)" }}
         >
           {/* Tombol play bulat */}
@@ -80,8 +180,16 @@ const VideoCard = ({ video, onClick }) => (
 
       {/* Durasi dan level kesulitan */}
       <div className="flex items-center gap-3 text-xs text-gray-500">
-        {/* Tampilkan durasi jika ada */}
-        {video.duration && <span>⏱ {video.duration}</span>}
+        {/* Ikon jam — durasi */}
+        {video.duration && (
+          <span className="flex items-center gap-1">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+            {video.duration}
+          </span>
+        )}
 
         {/* Badge level kesulitan dengan warna berbeda per level */}
         <span

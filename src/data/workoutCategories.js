@@ -10,6 +10,7 @@
  *   - level     : Tingkat kesulitan (Beginner / Intermediate / Advanced)
  *   - locked    : Apakah kategori ini membutuhkan akses premium
  *   - thumb     : Emoji ikon kategori
+ *   - image     : Path foto thumbnail kartu (di-cycle dari 3 foto aset)
  *   - desc      : Deskripsi singkat kategori
  *   - exercises : Array gerakan dalam kategori ini
  *
@@ -19,8 +20,25 @@
  *   - level    : Tingkat kesulitan gerakan
  *   - videoSrc : URL video (kosong jika belum tersedia)
  *   - steps    : Array langkah-langkah melakukan gerakan
+ *
+ * Foto thumbnail:
+ *   3 foto (Group 96, Rectangle 102, Rectangle 103) di-cycle
+ *   sehingga masing-masing muncul 2× pada 6 card.
  * ─────────────────────────────────────────────────
  */
+
+import group96  from "../assets/Group 96.png";
+import rect102  from "../assets/Rectangle 102.png";
+import rect103  from "../assets/Rectangle 103.png";
+import fullimg  from "../assets/fullimg.png";
+import yogaimg  from "../assets/yogaimg.png";
+import aperimg  from "../assets/aperimg.png";
+
+// Gambar thumbnail per kategori:
+//   id:1 Full Body Workout → fullimg.png
+//   id:2 Upper Body Strength → aperimg.png
+//   id:6 Yoga & Stretching → yogaimg.png
+//   id:3,4,5 tetap pakai aset lama
 
 export const workoutCategories = [
   {
@@ -29,6 +47,7 @@ export const workoutCategories = [
     level: "Beginner",
     locked: false, // Gratis — bisa diakses tanpa premium
     thumb: "🏃",
+    image: fullimg,   // Diganti → fullimg.png
     desc: "Latihan full body untuk pemula yang mencakup gerakan dasar untuk melatih seluruh tubuh.",
     exercises: [
       {
@@ -72,6 +91,7 @@ export const workoutCategories = [
     level: "Intermediate",
     locked: false, // Premium only
     thumb: "💪",
+    image: aperimg,   // Diganti → aperimg.png
     desc: "Latihan kekuatan tubuh bagian atas dengan fokus pada dada, bahu, dan lengan.",
     exercises: [
       {
@@ -115,6 +135,7 @@ export const workoutCategories = [
     level: "Advanced",
     locked: false, // Premium only
     thumb: "🔥",
+    image: rect103,   // Foto ke-3 → Rectangle 103.png
     desc: "Latihan kardio intensitas tinggi untuk membakar kalori maksimal dalam waktu singkat.",
     exercises: [
       {
@@ -158,6 +179,7 @@ export const workoutCategories = [
     level: "Intermediate",
     locked: false, // Premium only
     thumb: "⚡",
+    image: group96,   // Foto ke-4 → Group 96.png (duplikat foto 1)
     desc: "Latihan khusus untuk memperkuat otot inti dan perut agar lebih stabil dan kencang.",
     exercises: [
       {
@@ -201,6 +223,7 @@ export const workoutCategories = [
     level: "Advanced",
     locked: false, // Premium only
     thumb: "🦵",
+    image: rect102,   // Foto ke-5 → Rectangle 102.png (duplikat foto 2)
     desc: "Latihan berat untuk kaki mencakup squat, lunges, dan variasi gerakan kaki lainnya.",
     exercises: [
       {
@@ -244,6 +267,7 @@ export const workoutCategories = [
     level: "Beginner",
     locked: false, // Premium only
     thumb: "🧘",
+    image: yogaimg,   // Diganti → yogaimg.png
     desc: "Sesi yoga dan peregangan untuk meningkatkan fleksibilitas dan relaksasi tubuh.",
     exercises: [
       {

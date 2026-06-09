@@ -60,48 +60,62 @@ export default function Payment({ onBack, onSuccess }) {
   const handlePay = async () => {
     setLoading(true);
     try {
+      // Ambil token login dari localStorage untuk dipakai sebagai identitas saat request ke backend
       const token = localStorage.getItem("fitinToken");
 
-      // 1) Pastikan packages sudah di-seed, dan cari paket_id yang benar
+      // ─── LANGKAH 1: Ambil daftar paket dari backend ───────────────────────────
+      // Kita perlu tahu ID paket di database (bukan nama frontendnya)
+      // Contoh: "quarterly" di FE = "3 Bulan" di DB dengan id=2
       const { data: packages } = await api.get("/packages", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      // Map frontend plan -> backend nama_paket
+      // Cocokkan pilihan user (monthly/quarterly/yearly) ke nama paket di database
       const planMap = { monthly: "Bulanan", quarterly: "3 Bulan", yearly: "Tahunan" };
       const matchedPaket = packages.find(p => p.nama_paket === planMap[selectedPlan]);
       const paketId = matchedPaket ? matchedPaket.id : packages[0]?.id || 1;
 
-      // 2) Checkout ke backend dengan paket_id yang benar
+      // ─── LANGKAH 2: Minta backend buat transaksi & token Midtrans ─────────────
+      // Backend akan:
+      //   a) Buat record di tabel 'transactions' dengan status 'pending'
+      //   b) Menghubungi server Midtrans dan minta 'snap_token'
+      //   c) Kembalikan snap_token ke FE
       const { data: checkoutData } = await api.post("/payment/checkout", { paket_id: paketId }, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      // 3) Backend berhasil — dapatkan snap_token (jika sudah ada di backend)
-      // contoh integrasi midtrans (nantinya akan dipanggil di sini):
-      // window.snap.pay(checkoutData.snap_token, {
-      //   onSuccess: function(result){ ... },
-      //   onPending: function(result){ ... },
-      //   onError: function(result){ ... }
-      // });
-
+      // ─── LANGKAH 3: Validasi bahwa script Midtrans Snap sudah ter-load ────────
+      // Script Midtrans dimuat dari CDN di index.html:
+      // <script src="https://app.sandbox.midtrans.com/snap/snap.js" ...></script>
+      // Jika tidak ada internet atau diblokir ad-blocker, window.snap tidak akan ada
       if (!window.snap) {
         alert("Gagal memproses pembayaran: Script Midtrans tidak ditemukan. Pastikan Anda terhubung ke internet dan tidak menggunakan Ad-Blocker yang memblokir script pembayaran.");
         setLoading(false);
         return;
       }
 
+      // ─── LANGKAH 4: Buka popup pembayaran Midtrans Snap ──────────────────────
+      // window.snap.pay() adalah fungsi dari library Midtrans
+      // snap_token adalah "tiket unik" yang sudah dibuat backend untuk transaksi ini
+      // Midtrans akan tampilkan popup: pilih metode bayar (QRIS, BCA, dll)
       window.snap.pay(checkoutData.snap_token, {
+
+        // ─── Callback: dipanggil otomatis jika pembayaran BERHASIL ───────────
         onSuccess: async function () {
-          // Logika ketika pembayaran sukses
+          // Simpan status premium ke localStorage agar aplikasi langsung tahu user sudah premium
           localStorage.setItem("fitinPremium", "true");
           localStorage.setItem("fitinPlan", selectedPlan);
 
+          // Update data user di localStorage jika ada data user baru dari backend
           if (checkoutData.user) {
             localStorage.setItem("fitinUser", JSON.stringify(checkoutData.user));
           }
 
-          // Beritahu backend secara manual bahwa sukses (karena webhook midtrans tidak sampai ke localhost)
+          // ─── Catatan Penting: Mengapa ada /payment/success manual? ───────────
+          // Normalnya, Midtrans mengirim notifikasi ke endpoint /payment/webhook kita
+          // TAPI webhook butuh URL publik yang bisa diakses Midtrans dari internet
+          // Karena kita masih di localhost (tidak punya URL publik), webhook tidak bisa masuk
+          // Solusi: kita update manual ke backend setelah onSuccess dipanggil
           try {
             await api.post("/payment/success", {
               transaction_id: checkoutData.transaction.id
@@ -112,17 +126,22 @@ export default function Payment({ onBack, onSuccess }) {
             console.error("Gagal update status di backend", err);
           }
 
-          setStep(2); // Lanjut ke halaman sukses
+          setStep(2); // Pindah ke tampilan halaman sukses
         },
+
+        // ─── Callback: dipanggil jika pembayaran MASIH MENUNGGU (transfer bank) ─
         onPending: function (result) {
-          // Logika ketika menunggu pembayaran
+          // Contoh: user pilih transfer bank, menunggu konfirmasi
           console.log("Payment pending:", result);
         },
+
+        // ─── Callback: dipanggil jika pembayaran GAGAL ───────────────────────
         onError: function (result) {
-          // Logika jika pembayaran gagal
           console.error("Payment error:", result);
           alert("Pembayaran gagal!");
         },
+
+        // ─── Callback: dipanggil jika user MENUTUP popup tanpa bayar ─────────
         onClose: function () {
           console.log("Customer closed the popup without finishing the payment");
         }
